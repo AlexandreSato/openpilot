@@ -136,8 +136,12 @@
         <translation type="unfinished">이 차량은 openpilot 가감속 제어 대신 기본적으로 차량의 ACC로 가감속을 제어합니다. openpilot의 가감속 제어로 전환하려면 이 기능을 활성화하세요. openpilot 가감속 제어 알파를 활성화하는 경우 실험 모드 활성화를 권장합니다.</translation>
     </message>
     <message>
-        <source>openpilot longitudinal control may come in a future update.</source>
-        <translation type="unfinished">openpilot 가감속 제어는 향후 업데이트에서 지원될 수 있습니다.</translation>
+        <source>Enable ADB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ADB (Android Debug Bridge) allows connecting to your device over USB or over the network. See https://docs.comma.ai/how-to/connect-to-comma for more info.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

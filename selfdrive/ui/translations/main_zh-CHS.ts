@@ -136,8 +136,12 @@
         <translation type="unfinished">在这辆车上，openpilot 默认使用车辆内建的主动巡航控制（ACC），而非 openpilot 的纵向控制。启用此项功能可切换至 openpilot 的纵向控制。当启用 openpilot 纵向控制 Alpha 版本时，建议同时启用实验性模式（Experimental mode）。</translation>
     </message>
     <message>
-        <source>openpilot longitudinal control may come in a future update.</source>
-        <translation type="unfinished">openpilot纵向控制可能会在未来的更新中提供。</translation>
+        <source>Enable ADB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ADB (Android Debug Bridge) allows connecting to your device over USB or over the network. See https://docs.comma.ai/how-to/connect-to-comma for more info.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

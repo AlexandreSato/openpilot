@@ -47,19 +47,19 @@ class CarSpecificEvents:
 
 
   def update(self, CS: car.CarState, CS_prev: car.CarState, CC: car.CarControl):
-    if self.CP.carName in ('body', 'mock'):
+    if self.CP.brand in ('body', 'mock'):
       events = Events()
 
-    elif self.CP.carName in ('subaru', 'mazda'):
+    elif self.CP.brand in ('subaru', 'mazda'):
       events = self.create_common_events(CS, CS_prev)
 
-    elif self.CP.carName == 'ford':
+    elif self.CP.brand == 'ford':
       events = self.create_common_events(CS, CS_prev, extra_gears=[GearShifter.manumatic])
 
-    elif self.CP.carName == 'nissan':
+    elif self.CP.brand == 'nissan':
       events = self.create_common_events(CS, CS_prev, extra_gears=[GearShifter.brake])
 
-    elif self.CP.carName == 'chrysler':
+    elif self.CP.brand == 'chrysler':
       events = self.create_common_events(CS, CS_prev, extra_gears=[GearShifter.low])
 
       # Low speed steer alert hysteresis logic
@@ -70,7 +70,7 @@ class CarSpecificEvents:
       if self.low_speed_alert:
         events.add(EventName.belowSteerSpeed)
 
-    elif self.CP.carName == 'honda':
+    elif self.CP.brand == 'honda':
       events = self.create_common_events(CS, CS_prev, pcm_enable=False)
 
       if self.CP.pcmCruise and CS.vEgo < self.CP.minEnableSpeed:
@@ -91,7 +91,7 @@ class CarSpecificEvents:
       if self.CP.minEnableSpeed > 0 and CS.vEgo < 0.001:
         events.add(EventName.manualRestart)
 
-    elif self.CP.carName == 'toyota':
+    elif self.CP.brand == 'toyota':
       events = self.create_common_events(CS, CS_prev)
 
       if self.CP.openpilotLongitudinalControl:
@@ -114,7 +114,7 @@ class CarSpecificEvents:
       if CS.brakeholdGovernor:
         events.add(EventName.automaticBrakehold)
 
-    elif self.CP.carName == 'gm':
+    elif self.CP.brand == 'gm':
       # The ECM allows enabling on falling edge of set, but only rising edge of resume
       events = self.create_common_events(CS, CS_prev, extra_gears=[GearShifter.sport, GearShifter.low,
                                                                    GearShifter.eco, GearShifter.manumatic],
@@ -133,7 +133,7 @@ class CarSpecificEvents:
       if CS.vEgo < self.CP.minSteerSpeed:
         events.add(EventName.belowSteerSpeed)
 
-    elif self.CP.carName == 'volkswagen':
+    elif self.CP.brand == 'volkswagen':
       events = self.create_common_events(CS, CS_prev, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic],
                                          pcm_enable=self.CP.pcmCruise,
                                          enable_buttons=(ButtonType.setCruise, ButtonType.resumeCruise))
@@ -156,7 +156,7 @@ class CarSpecificEvents:
       # if CC.eps_timer_soft_disable_alert:  # type: ignore[attr-defined]
       #   events.add(EventName.steerTimeLimit)
 
-    elif self.CP.carName == 'hyundai':
+    elif self.CP.brand == 'hyundai':
       # On some newer model years, the CANCEL button acts as a pause/resume button based on the PCM state
       # To avoid re-engaging when openpilot cancels, check user engagement intention via buttons
       # Main button also can trigger an engagement on these cars
@@ -173,7 +173,7 @@ class CarSpecificEvents:
         events.add(EventName.belowSteerSpeed)
 
     else:
-      raise ValueError(f"Unsupported car: {self.CP.carName}")
+      raise ValueError(f"Unsupported car: {self.CP.brand}")
 
     return events
 
