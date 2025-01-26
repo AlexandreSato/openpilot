@@ -1,6 +1,7 @@
 <h1>SatoPilot</h1>
 
 * Super fast takeoff in traffic jams for all car brands
+* Extract and write Toyota TSK SecOC param with a button in settings pannel (software->targetBranch->extract_secoc_key_btn) **after go back to personal3**
 * QrCode to watch the videos of comma3(X) memory in your smartphone
 * Smooth longitudinal tuning for all car brands (stripped acceleration) for good mileage in high speeds
 * DrawLock on from programanIchiro to detect motorcycles
@@ -11,9 +12,13 @@
 * Toyotas turn the comma3(X) screen off with fog light
 * Toyotas remote un/lock doors using smartphone while engine on
 <br><br>
-<div align="center" style="text-align: center;">
+<div align="center" style="text-align: left;">
 See the features in action at this video: (https://youtu.be/HZEI8A6YVkA)
-the url for installation is
+<br><br>
+The installation URL (recommended to start with
+
+```openpilot-nightly.comma.ai```
+to avoid issues with the Flask package) is:
 
 ```
 https://bit.ly/3HriaWt
@@ -22,6 +27,11 @@ or
 ```
 https://smiskol.com/fork/AlexandreSato/personal3
 ```
+or
+```
+alexandresato/personal3
+```
+<br>
 
 💰 Donate 💰
 ---
