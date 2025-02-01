@@ -1,7 +1,7 @@
 <h1>SatoPilot</h1>
 
 * Super fast takeoff in traffic jams for all car brands
-* Extract and write Toyota TSK SecOC param with a button in settings pannel (software->targetBranch->extract_secoc_key_btn) **after go back to personal3**
+* Extract and write Toyota TSK SecOC param with a button in settings panel (software->targetBranch->extract_secoc_key_btn) **after go back to personal3**
 * QrCode to watch the videos of comma3(X) memory in your smartphone
 * Smooth longitudinal tuning for all car brands (stripped acceleration) for good mileage in high speeds
 * DrawLock on from programanIchiro to detect motorcycles
