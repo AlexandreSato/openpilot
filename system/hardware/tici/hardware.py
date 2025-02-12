@@ -76,7 +76,7 @@ def sudo_write(val, path):
 
 def sudo_read(path: str) -> str:
   try:
-    return subprocess.check_output(f"sudo cat {path}", shell=True, encoding='utf8')
+    return subprocess.check_output(f"sudo cat {path}", shell=True, encoding='utf8').strip()
   except Exception:
     return ""
 
@@ -388,7 +388,7 @@ class Tici(HardwareBase):
     affine_irq(5, "kgsl-3d0")
 
     # camerad core
-    camera_irqs = ("cci", "cpas_camnoc", "cpas-cdm", "csid", "ife", "csid-lite", "ife-lite")
+    camera_irqs = ("a5", "cci", "cpas_camnoc", "cpas-cdm", "csid", "ife", "csid-lite", "ife-lite")
     for n in camera_irqs:
       affine_irq(5, n)
 
