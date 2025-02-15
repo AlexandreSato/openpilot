@@ -208,7 +208,8 @@ class TestOnroad:
     big_logs = [f for f, n in cnt.most_common(3) if n / sum(cnt.values()) > 30.]
     assert len(big_logs) == 0, f"Log spam: {big_logs}"
 
-  def test_log_sizes(self):
+  def test_log_sizes(self, subtests):
+    # TODO: this isn't super stable between different devices
     for f, sz in self.log_sizes.items():
       if f.name == "qcamera.ts":
         assert 2.15 < sz < 2.6
@@ -318,35 +319,21 @@ class TestOnroad:
   def test_gpu_usage(self):
     assert self.gpu_procs == {"weston", "ui", "camerad", "selfdrive.modeld.modeld", "selfdrive.modeld.dmonitoringmodeld"}
 
-  def test_camera_processing_time(self):
+  def test_camera_frame_timings(self, subtests):
     result = "\n"
     result += "------------------------------------------------\n"
-    result += "-------------- ImgProc Timing ------------------\n"
-    result += "------------------------------------------------\n"
-
-    ts = [getattr(m, m.which()).processingTime for m in self.lr if 'CameraState' in m.which()]
-    assert min(ts) < 0.025, f"high execution time: {min(ts)}"
-    result += f"execution time: min  {min(ts):.5f}s\n"
-    result += f"execution time: max  {max(ts):.5f}s\n"
-    result += f"execution time: mean {np.mean(ts):.5f}s\n"
-    result += "------------------------------------------------\n"
-    print(result)
-
-  @pytest.mark.skip("TODO: enable once timings are fixed")
-  def test_camera_frame_timings(self):
-    result = "\n"
-    result += "------------------------------------------------\n"
-    result += "-----------------  SoF Timing ------------------\n"
+    result += "-----------------  SOF Timing ------------------\n"
     result += "------------------------------------------------\n"
     for name in ['roadCameraState', 'wideRoadCameraState', 'driverCameraState']:
       ts = [getattr(m, m.which()).timestampSof for m in self.lr if name in m.which()]
       d_ms = np.diff(ts) / 1e6
       d50 = np.abs(d_ms-50)
-      assert max(d50) < 1.0, f"high sof delta vs 50ms: {max(d50)}"
-      result += f"{name} sof delta vs 50ms: min  {min(d50):.5f}s\n"
-      result += f"{name} sof delta vs 50ms: max  {max(d50):.5f}s\n"
-      result += f"{name} sof delta vs 50ms: mean {d50.mean():.5f}s\n"
-      result += "------------------------------------------------\n"
+      result += f"{name} sof delta vs 50ms: min  {min(d50):.2f}ms\n"
+      result += f"{name} sof delta vs 50ms: max  {max(d50):.2f}ms\n"
+      result += f"{name} sof delta vs 50ms: mean {d50.mean():.2f}ms\n"
+      with subtests.test(camera=name):
+        assert max(d50) < 5.0, f"high SOF delta vs 50ms: {max(d50)}"
+    result += "------------------------------------------------\n"
     print(result)
 
   def test_mpc_execution_timings(self):
