@@ -7,8 +7,12 @@ export OPENBLAS_NUM_THREADS=1
 export VECLIB_MAXIMUM_THREADS=1
 
 if [ -z "$AGNOS_VERSION" ]; then
-  export AGNOS_VERSION="11.7"
-  pip install flask
+  export AGNOS_VERSION="11.8"
 fi
 
 export STAGING_ROOT="/data/safe_staging"
+
+# SatoPilot require flask
+if [ -z "$AGNOS_VERSION" ]; then
+  pip install flask
+fi
