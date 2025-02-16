@@ -54,6 +54,9 @@ def only_onroad(started: bool, params: Params, CP: car.CarParams) -> bool:
 def only_offroad(started: bool, params: Params, CP: car.CarParams) -> bool:
   return not started
 
+def not_first_boot(started: bool, params: Params, CP: car.CarParams) -> bool:
+  return bool(params.get_bool("AleSato_SecondBoot"))
+
 def or_(*fns):
   return lambda *args: operator.or_(*(fn(*args) for fn in fns))
 
@@ -107,7 +110,7 @@ procs = [
 
 
   # AleSato procs
-  PythonProcess("remotedoorsd", "system.webserver.remotedoorsd", always_run),
+  PythonProcess("remotedoorsd", "system.webserver.remotedoorsd", not_first_boot),
 
 
   # debug procs
