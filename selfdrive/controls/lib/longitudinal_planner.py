@@ -26,8 +26,6 @@ MIN_ALLOW_THROTTLE_SPEED = 2.5
 # cgw smooth long tune, dragonpilot
 A_CRUISE_MAX_VALS = [3.0, 1.7, 1.3, 0.7, 0.6, 0.44, 0.32, 0.22, 0.16, 0.0078]
 A_CRUISE_MAX_BP =   [0.,  3,   6.,  8.,  11., 15.,  20.,  25.,  30.,  55.]
-A_CRUISE_MIN_VALS = [-0.65,  -0.60,  -0.70, -0.70,  -0.65, -0.65]
-A_CRUISE_MIN_BP =   [0.,     0.07,   10.,   20.,    30.,   55.]
 
 # Lookup table for turns
 _A_TOTAL_MAX_V = [1.7, 3.2]
@@ -40,9 +38,6 @@ def get_max_accel(v_ego):
 def get_coast_accel(pitch):
   return np.sin(pitch) * -5.65 - 0.3  # fitted from data using xx/projects/allow_throttle/compute_coast_accel.py
 
-
-def get_min_accel(v_ego):
-  return np.interp(v_ego, A_CRUISE_MIN_BP, A_CRUISE_MIN_VALS)
 
 def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):
   """
@@ -140,8 +135,7 @@ class LongitudinalPlanner:
     prev_accel_constraint = not (reset_state or sm['carState'].standstill)
 
     if self.mpc.mode == 'acc':
-      # accel_limits = [A_CRUISE_MIN, get_max_accel(v_ego)]
-      accel_clip = [get_min_accel(v_ego), get_max_accel(v_ego)]
+      accel_clip = [ACCEL_MIN, get_max_accel(v_ego)]
       steer_angle_without_offset = sm['carState'].steeringAngleDeg - sm['liveParameters'].angleOffsetDeg
       accel_clip = limit_accel_in_turns(v_ego, steer_angle_without_offset, accel_clip, self.CP)
     else:
