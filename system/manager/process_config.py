@@ -55,7 +55,7 @@ def only_offroad(started: bool, params: Params, CP: car.CarParams) -> bool:
   return not started
 
 def not_first_boot(started: bool, params: Params, CP: car.CarParams) -> bool:
-  return int(params.get("BootCount")) > 2
+  return bool(params.get_bool("AleSato_SecondBoot"))
 
 def or_(*fns):
   return lambda *args: operator.or_(*(fn(*args) for fn in fns))

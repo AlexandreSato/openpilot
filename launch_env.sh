@@ -13,6 +13,7 @@ fi
 export STAGING_ROOT="/data/safe_staging"
 
 # SatoPilot require flask
-if [ -z "$AGNOS_VERSION" ]; then
+if [ -f /AGNOS ]; then
   pip install flask
+  echo -en "1" > /data/params/d/AleSato_SecondBoot
 fi
