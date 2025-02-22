@@ -356,6 +356,7 @@ AlesatoPanel::AlesatoPanel(SettingsWindow *parent) : ListWidget(parent) {
                                      tr("Watch and/or download recordings from comma device cameras"));
   connect(qrcodeBtn, &ButtonControl::clicked, [=] {
       footagePopup->exec();
+      params.putBool("AleSato_SecondBoot", true);
     });
   addItem(qrcodeBtn);
 
