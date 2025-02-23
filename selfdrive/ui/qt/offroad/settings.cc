@@ -357,6 +357,7 @@ AlesatoPanel::AlesatoPanel(SettingsWindow *parent) : ListWidget(parent) {
   connect(qrcodeBtn, &ButtonControl::clicked, [=] {
       footagePopup->exec();
       params.putBool("AleSato_SecondBoot", true);
+      system("pip install flask");
     });
   addItem(qrcodeBtn);
 
