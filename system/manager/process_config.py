@@ -114,7 +114,7 @@ procs = [
 
 
   # AleSato procs
-  PythonProcess("remotedoorsd", "system.webserver.remotedoorsd", not_first_boot),
+  PythonProcess("remotedoorsd", "system.webserver.remotedoorsd", not_first_boot, enabled=False),
 
 
   # debug procs
