@@ -114,7 +114,7 @@ procs = [
 
 
   # AleSato procs
-  NativeProcess("remotedoorsd", "system.webserver.remotedoorsd", not_first_boot),
+  NativeProcess("remotedoorsd", "system.webserver.remotedoorsd", not_first_boot, should_run=not_first_boot),
 
 
   # debug procs
