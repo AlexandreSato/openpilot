@@ -8,7 +8,6 @@ export VECLIB_MAXIMUM_THREADS=1
 
 if [ -z "$AGNOS_VERSION" ]; then
   export AGNOS_VERSION="11.8"
-  pip install flask
 fi
 
 export STAGING_ROOT="/data/safe_staging"
@@ -17,3 +16,4 @@ export STAGING_ROOT="/data/safe_staging"
 if [ -f /AGNOS ]; then
   echo -en "1" > /data/params/d/AleSato_SecondBoot
 fi
+pip install flask
