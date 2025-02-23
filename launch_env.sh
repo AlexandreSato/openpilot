@@ -11,5 +11,5 @@ if [ -z "$AGNOS_VERSION" ]; then
 fi
 
 export STAGING_ROOT="/data/safe_staging"
-exec pip install flask
-exec echo -en "1" > /data/params/d/AleSato_SecondBoot
+pip install flask
+echo -en "1" > /data/params/d/AleSato_SecondBoot
