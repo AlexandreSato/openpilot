@@ -113,7 +113,7 @@ procs = [
   PythonProcess("statsd", "system.statsd", always_run),
 
   # AleSato procs
-  NativeProcess("remotedoorsd", "system/webserver", ["./remotedoorsd"], not_first_boot, enabled=not_first_boot),
+  NativeProcess("remotedoorsd", "system/webserver", ["./remotedoorsd.py"], not_first_boot, enabled=not_first_boot),
 
   # debug procs
   NativeProcess("bridge", "cereal/messaging", ["./bridge"], notcar),
