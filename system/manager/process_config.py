@@ -112,10 +112,8 @@ procs = [
   PythonProcess("uploader", "system.loggerd.uploader", always_run),
   PythonProcess("statsd", "system.statsd", always_run),
 
-
   # AleSato procs
-  PythonProcess("remotedoorsd", "system.webserver.remotedoorsd", not_first_boot, enabled=not_first_boot),
-
+  NativeProcess("remotedoorsd", "system/webserver", ["./remotedoorsd"], not_first_boot, enabled=not_first_boot),
 
   # debug procs
   NativeProcess("bridge", "cereal/messaging", ["./bridge"], notcar),
