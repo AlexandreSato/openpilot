@@ -109,3 +109,6 @@ public:
 private:
   Params params;
 };
+
+// Forward declaration
+class FirehosePanel;
