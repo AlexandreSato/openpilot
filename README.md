@@ -15,10 +15,7 @@
 <div align="center" style="text-align: left;">
 See the features in action at this video: (https://youtu.be/HZEI8A6YVkA)
 <br><br>
-The installation URL (recommended to start with
-
-```openpilot-nightly.comma.ai```
-to avoid issues with the Flask package) is:
+The installation URL is:
 
 ```
 alexandresato/personal3
