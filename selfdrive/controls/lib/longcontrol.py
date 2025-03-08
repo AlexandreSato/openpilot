@@ -5,7 +5,6 @@ from openpilot.selfdrive.controls.lib.drive_helpers import CONTROL_N
 from openpilot.common.pid import PIDController
 from openpilot.selfdrive.modeld.constants import ModelConstants
 from openpilot.common.params import Params
-from openpilot.common.numpy_fast import interp
 
 CONTROL_N_T_IDX = ModelConstants.T_IDXS[:CONTROL_N]
 
@@ -95,7 +94,7 @@ class LongControl:
       # output_accel = self.pid.update(error, speed=CS.vEgo,
       #                                feedforward=a_target)
       # AleSato apply deadzone to experimental mode
-      deadzone = interp(CS.vEgo, [0, 4, 9], [0, 0.22, 0.30])
+      deadzone = np.interp(CS.vEgo, [0, 4, 9], [0, 0.22, 0.30])
       error_deadzone = apply_deadzone(error, deadzone)
 
       output_accel = self.pid.update(error_deadzone if Params().get_bool("ExperimentalMode") else error, speed=CS.vEgo,
