@@ -988,7 +988,6 @@ EVENTS: dict[int, dict[str, Alert | AlertCallbackType]] = {
       "Manual Steering Required",
       AlertStatus.userPrompt, AlertSize.mid,
       Priority.HIGH, VisualAlert.steerRequired, AudibleAlert.prompt, .1),
-    ET.NO_ENTRY: NoEntryAlert("Manual Steering Required"),
   },
 
   EventName.automaticBrakehold: {
