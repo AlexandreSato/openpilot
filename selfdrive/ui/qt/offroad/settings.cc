@@ -328,7 +328,7 @@ void SettingsWindow::setCurrentPanel(int index, const QString &param) {
     if (param.endsWith("Panel")) {
       QString panelName = param;
       panelName.chop(5); // Remove "Panel" suffix
-      
+
       // Find the panel by name
       for (int i = 0; i < nav_btns->buttons().size(); i++) {
         if (nav_btns->buttons()[i]->text() == tr(panelName.toStdString().c_str())) {
@@ -340,7 +340,7 @@ void SettingsWindow::setCurrentPanel(int index, const QString &param) {
       emit expandToggleDescription(param);
     }
   }
-  
+
   panel_widget->setCurrentIndex(index);
   nav_btns->buttons()[index]->setChecked(true);
 }
@@ -382,6 +382,12 @@ AlesatoPanel::AlesatoPanel(SettingsWindow *parent) : ListWidget(parent) {
       tr("Customized Car API"),
       tr("Use neutral force and a alternative acceleration command for gain PCM compensation forces and mess with permiting brake bit."),
       "../assets/offroad/icon_settings.png",
+    },
+    {
+      "AleSato_ApplyDeadZoneToExpMode",
+      tr("Apply DeadZone to Experimental Mode"),
+      tr("Apply a acceleration deadzone (longitudinal) to Experimental Mode."),
+      "../assets/img_experimental.svg",
     },
   };
   for (auto &[param, title, desc, icon] : toggle_defs) {

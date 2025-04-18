@@ -129,6 +129,14 @@
         <source>Use neutral force and a alternative acceleration command for gain PCM compensation forces and mess with permiting brake bit.</source>
         <translation>Use a força neutra e um comando de aceleração alternativo para ganhar compensação PCM, e mexe com &quot;permit braking&quot; bit.</translation>
     </message>
+    <message>
+        <source>Apply DeadZone to Experimental Mode</source>
+        <translation>Aplicar Zona Morta ao Modo Experimental</translation>
+    </message>
+    <message>
+        <source>Apply a acceleration deadzone (longitudinal) to Experimental Mode.</source>
+        <translation>Aplica uma zona morta ao controle longitudinal do modo Experimental.</translation>
+    </message>
 </context>
 <context>
     <name>ConfirmationDialog</name>
@@ -625,10 +633,6 @@ O Modo Firehose permite maximizar o envio de dados de treinamento para melhorar 
         <translation>Retome o controle a qualquer momento</translation>
     </message>
     <message>
-        <source>Brake Hold Active</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>CAN Bus Disconnected</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1092,6 +1096,14 @@ Ré</translation>
     </message>
     <message>
         <source>Toggle stock LKAS on or off to engage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press Resume to Exit Brake Hold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Radar Temporarily Unavailable</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -96,8 +96,9 @@ class LongControl:
       # AleSato apply deadzone to experimental mode
       deadzone = np.interp(CS.vEgo, [0, 4, 9], [0, 0.22, 0.30])
       error_deadzone = apply_deadzone(error, deadzone)
+      should_appy_deadzone = Params().get_bool("ExperimentalMode") and Params().get_bool("AleSato_ApplyDeadZoneToExpMode")
 
-      output_accel = self.pid.update(error_deadzone if Params().get_bool("ExperimentalMode") else error, speed=CS.vEgo,
+      output_accel = self.pid.update(error_deadzone if should_appy_deadzone else error, speed=CS.vEgo,
                                      feedforward=a_target)
 
     self.last_output_accel = np.clip(output_accel, accel_limits[0], accel_limits[1])
