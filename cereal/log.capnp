@@ -48,6 +48,7 @@ struct OnroadEvent @0xc4fa6047f024e718 {
     preEnableStandstill @12;  # added during pre-enable state with brake
     gasPressedOverride @13;  # added when user is pressing gas with no disengage on gas
     steerOverride @14;
+    steerDisengage @94;  # exits active state
     cruiseDisabled @15;
     speedTooLow @16;
     outOfSpace @17;
@@ -129,10 +130,10 @@ struct OnroadEvent @0xc4fa6047f024e718 {
 
 
     # AleSato events
-    manualSteeringRequired @94;
-    steerAlwaysEngageSound @95;
-    steerAlwaysDisengageSound @96;
-    automaticBrakehold @97;
+    manualSteeringRequired @95;
+    steerAlwaysEngageSound @96;
+    steerAlwaysDisengageSound @97;
+    automaticBrakehold @98;
 
 
     soundsUnavailableDEPRECATED @47;
