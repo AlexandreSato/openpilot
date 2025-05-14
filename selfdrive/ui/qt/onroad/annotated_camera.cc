@@ -30,6 +30,13 @@ ButtonsWindow::ButtonsWindow(QWidget *parent) : QWidget(parent) {
   btns_layout->addWidget(helloButton, 0, Qt::AlignLeft);
   btns_layout->addSpacing(35);
 
+  ndogButton = new QPushButton(initHelloButton);
+  ndogButton->setFixedWidth(200);
+  ndogButton->setFixedHeight(200);
+  btns_layout->addWidget(ndogButton, 0, Qt::AlignLeft);
+  btns_layout->addSpacing(35);
+
+
   setStyleSheet(R"(
     QPushButton {
       color: white;
@@ -42,6 +49,7 @@ ButtonsWindow::ButtonsWindow(QWidget *parent) : QWidget(parent) {
   )");
 
   helloButton->setStyleSheet(QString("font-size: 45px; border-radius: 32px; border-color: %1").arg(helloButtonColors.at(1)));
+  ndogButton->setStyleSheet(QString("font-size: 45px; border-radius: 32px; border-color: %1").arg(helloButtonColors.at(2)));
 }
 
 // We need this function when button need's update from CarState for example
