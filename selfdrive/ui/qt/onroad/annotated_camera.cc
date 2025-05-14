@@ -15,7 +15,7 @@ ButtonsWindow::ButtonsWindow(QWidget *parent) : QWidget(parent) {
   QWidget *btns_wrapper = new QWidget;
   QHBoxLayout *btns_layout  = new QHBoxLayout(btns_wrapper);
   btns_layout->setSpacing(0);
-  btns_layout->setContentsMargins(200, 0, 0, 0);
+  btns_layout->setContentsMargins(10, 0, 0, 0);
   main_layout->addWidget(btns_wrapper, 0, Qt::AlignBottom);
   QString initHelloButton = "";
   helloButton = new QPushButton(initHelloButton);
@@ -28,14 +28,19 @@ ButtonsWindow::ButtonsWindow(QWidget *parent) : QWidget(parent) {
   helloButton->setFixedWidth(200);
   helloButton->setFixedHeight(200);
   btns_layout->addWidget(helloButton, 0, Qt::AlignLeft);
-  btns_layout->addSpacing(35);
+  btns_layout->addSpacing(45);
 
   ndogButton = new QPushButton(initHelloButton);
-  ndogButton->setFixedWidth(200);
+  ndogButton->setFixedWidth(250);
   ndogButton->setFixedHeight(200);
   btns_layout->addWidget(ndogButton, 0, Qt::AlignLeft);
   btns_layout->addSpacing(35);
+  btns_layout->addStretch();
 
+  QObject::connect(ndogButton, &QPushButton::clicked, [=]() {
+    bool ndog_button_state = Params().getBool("DisengageOnAccelerator");
+    Params().putBool("DisengageOnAccelerator", !ndog_button_state);
+  });
 
   setStyleSheet(R"(
     QPushButton {
@@ -49,18 +54,26 @@ ButtonsWindow::ButtonsWindow(QWidget *parent) : QWidget(parent) {
   )");
 
   helloButton->setStyleSheet(QString("font-size: 45px; border-radius: 32px; border-color: %1").arg(helloButtonColors.at(1)));
-  ndogButton->setStyleSheet(QString("font-size: 45px; border-radius: 32px; border-color: %1").arg(helloButtonColors.at(2)));
+  ndogButton->setStyleSheet(QString("font-size: 45px; border-radius: 32px; border-color: %1").arg(helloButtonColors.at(3)));
 }
 
 // We need this function when button need's update from CarState for example
 void ButtonsWindow::updateState(const UIState &s) {
   const auto helloButtonState = Params("/dev/shm/params").getBool("AleSato_SteerAlwaysOn");
   if(helloButtonState) {
-    helloButton->setStyleSheet(QString("font-size: 45px; border-radius: 100px; border-color: %1").arg(helloButtonColors.at(2)));
+    helloButton->setStyleSheet(QString("font-size: 45px; border-radius: 100px; border-color: %1").arg(helloButtonColors.at(1)));
     helloButton->setText("STEER\nalways");
   } else {
     helloButton->setStyleSheet(QString("font-size: 45px; border-radius: 100px; border-color: %1").arg(helloButtonColors.at(3)));
     helloButton->setText("stock");
+  }
+  const auto ndogButtonState = Params().getBool("DisengageOnAccelerator");
+  if(ndogButtonState) {
+    ndogButton->setStyleSheet(QString("font-size: 75px; border-radius: 20px; border-color: %1").arg(helloButtonColors.at(3)));
+    ndogButton->setText("DOG");
+  } else {
+    ndogButton->setStyleSheet(QString("font-size: 75px; border-radius: 20px; border-color: %1").arg(helloButtonColors.at(4)));
+    ndogButton->setText("NDOG");
   }
 }
 // End AleSato's HelloButton
