@@ -67,10 +67,10 @@ void ButtonsWindow::updateState(const UIState &s) {
   }
   const auto ndogButtonState = Params().getBool("DisengageOnAccelerator");
   if(ndogButtonState) {
-    ndogButton->setStyleSheet(QString("font-size: 75px; border-radius: 20px; border-color: %1").arg(helloButtonColors.at(3)));
+    ndogButton->setStyleSheet(QString("font-size: 60px; border-radius: 30px; border-color: %1").arg(helloButtonColors.at(3)));
     ndogButton->setText("DOG");
   } else {
-    ndogButton->setStyleSheet(QString("font-size: 75px; border-radius: 20px; border-color: %1").arg(helloButtonColors.at(4)));
+    ndogButton->setStyleSheet(QString("font-size: 60px; border-radius: 30px; border-color: %1").arg(helloButtonColors.at(4)));
     ndogButton->setText("NDOG");
   }
 }
