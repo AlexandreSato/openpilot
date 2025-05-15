@@ -15,33 +15,31 @@ ButtonsWindow::ButtonsWindow(QWidget *parent) : QWidget(parent) {
   QWidget *btns_wrapper = new QWidget;
   QHBoxLayout *btns_layout  = new QHBoxLayout(btns_wrapper);
   btns_layout->setSpacing(0);
-  btns_layout->setContentsMargins(10, 0, 0, 0);
+  btns_layout->setContentsMargins(200, 0, 0, 0);
   main_layout->addWidget(btns_wrapper, 0, Qt::AlignBottom);
   QString initHelloButton = "";
-  helloButton = new QPushButton(initHelloButton);
-
-  QObject::connect(helloButton, &QPushButton::clicked, [=]() {
-    bool button_state = Params("/dev/shm/params").getBool("AleSato_SteerAlwaysOn");
-    Params("/dev/shm/params").putBool("AleSato_SteerAlwaysOn", !button_state);
-  });
-
-  helloButton->setFixedWidth(200);
-  helloButton->setFixedHeight(200);
-  btns_layout->addWidget(helloButton, 0, Qt::AlignLeft);
-  btns_layout->addSpacing(45);
 
   ndogButton = new QPushButton(initHelloButton);
   ndogButton->setFixedWidth(250);
   ndogButton->setFixedHeight(200);
   btns_layout->addWidget(ndogButton, 0, Qt::AlignLeft);
-  btns_layout->addSpacing(35);
-  btns_layout->addStretch();
-
+  btns_layout->addSpacing(45);
   QObject::connect(ndogButton, &QPushButton::clicked, [=]() {
     bool ndog_button_state = Params().getBool("DisengageOnAccelerator");
     Params().putBool("DisengageOnAccelerator", !ndog_button_state);
   });
 
+  helloButton = new QPushButton(initHelloButton);
+  QObject::connect(helloButton, &QPushButton::clicked, [=]() {
+    bool button_state = Params("/dev/shm/params").getBool("AleSato_SteerAlwaysOn");
+    Params("/dev/shm/params").putBool("AleSato_SteerAlwaysOn", !button_state);
+  });
+  helloButton->setFixedWidth(200);
+  helloButton->setFixedHeight(200);
+  btns_layout->addWidget(helloButton, 0, Qt::AlignLeft);
+  btns_layout->addSpacing(45);
+
+  btns_layout->addStretch();
   setStyleSheet(R"(
     QPushButton {
       color: white;
