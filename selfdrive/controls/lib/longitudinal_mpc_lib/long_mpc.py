@@ -88,11 +88,11 @@ def get_T_FOLLOW(personality=log.LongitudinalPersonality.standard):
 #   return (v_lead**2) / (2 * COMFORT_BRAKE)
 def get_stopped_equivalence_factor(v_lead, v_ego):
   v_diff_offset = 0
-  v_diff_offset_max = 12
-  speed_to_reach_max_v_diff_offset = 26 # in kp/h
+  v_diff_offset_max = 10
+  speed_to_reach_max_v_diff_offset = 20 # in kp/h
   speed_to_reach_max_v_diff_offset = speed_to_reach_max_v_diff_offset * CV.KPH_TO_MS
   delta_speed = v_lead - v_ego
-  if np.all(delta_speed > 0):
+  if np.all(delta_speed > 0.3):
     v_diff_offset = delta_speed * 2
     v_diff_offset = np.clip(v_diff_offset, 0, v_diff_offset_max)
                                                                     # increase in a linear behavior
@@ -303,10 +303,8 @@ class LongitudinalMpc:
     j_ego_v_ego = 1
     a_change_v_ego = 1
     if (v_lead0 - v_ego >= 0) and (v_lead1 - v_ego >= 0):
-      # j_ego_v_ego = np.interp(v_ego, v_ego_bps, [.10, 1.])
-      # a_change_v_ego = np.interp(v_ego, v_ego_bps, [.10, 1.])
-      j_ego_v_ego = np.interp(v_ego, v_ego_bps, [.50, 1.])
-      a_change_v_ego = np.interp(v_ego, v_ego_bps, [.50, 1.])
+      j_ego_v_ego = np.interp(v_ego, v_ego_bps, [.9, 1.])
+      a_change_v_ego = np.interp(v_ego, v_ego_bps, [.9, 1.])
     if self.mode == 'acc':
       a_change_cost = A_CHANGE_COST if prev_accel_constraint else 0
       # cost_weights = [X_EGO_OBSTACLE_COST, X_EGO_COST, V_EGO_COST, A_EGO_COST, jerk_factor * a_change_cost, jerk_factor * J_EGO_COST]
