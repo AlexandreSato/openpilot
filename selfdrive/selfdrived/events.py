@@ -992,7 +992,7 @@ EVENTS: dict[int, dict[str, Alert | AlertCallbackType]] = {
       "LKAS is PAUSED per blinker",
       "Manual Steering Required",
       AlertStatus.userPrompt, AlertSize.mid,
-      Priority.LOWEST, VisualAlert.steerRequired, AudibleAlert.prompt, .1),
+      Priority.LOWER, VisualAlert.steerRequired, AudibleAlert.prompt, .1),
   },
 
   EventName.automaticBrakehold: {
