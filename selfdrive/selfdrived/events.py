@@ -366,6 +366,8 @@ def invalid_lkas_setting_alert(CP: car.CarParams, CS: car.CarState, sm: messagin
     text = "Enable your car's LKAS to engage"
   elif CP.brand == "nissan":
     text = "Disable your car's stock LKAS to engage"
+  elif CP.brand == "toyota":
+    text = "Disable your car's native Toyota's LDA to engage"
   return NormalPermanentAlert("Invalid LKAS setting", text)
 
 
