@@ -1109,7 +1109,7 @@ Ré</translation>
     </message>
     <message>
         <source>Invalid LKAS setting</source>
-        <translation type="unfinished"></translation>
+        <translation>Configuração LKAS inválida</translation>
     </message>
     <message>
         <source>Security Key Not Available</source>
@@ -1118,6 +1118,10 @@ Ré</translation>
     <message>
         <source>Toggle stock LKAS on or off to engage</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable your car native Toyota LDA to engage</source>
+        <translation>Desligue o original Toyota LDA para acionar</translation>
     </message>
     <message>
         <source>Press Resume to Exit Brake Hold</source>
