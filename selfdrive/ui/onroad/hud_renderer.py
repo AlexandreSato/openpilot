@@ -71,7 +71,7 @@ class HudRenderer(Widget):
     self._font_medium: rl.Font = gui_app.font(FontWeight.MEDIUM)
 
     self._exp_button = ExpButton(UI_CONFIG.button_size, UI_CONFIG.wheel_icon_size)
-    self._hello_button = HelloButton(UI_CONFIG.button_size)
+    self._hello_button = HelloButton(rl.Rectangle(600, 800, 200, 140))
 
   def _update_state(self, sm: SubMaster) -> None:
     """Update HUD state based on car state and controls state."""
@@ -101,6 +101,7 @@ class HudRenderer(Widget):
     self.speed = max(0.0, v_ego * speed_conversion)
 
     self._exp_button.update_state(sm)
+    self._hello_button.update_state()
 
   def _render(self, rect: rl.Rectangle) -> None:
     """Render HUD elements to the screen."""
@@ -124,7 +125,7 @@ class HudRenderer(Widget):
     button_x = rect.x + rect.width - UI_CONFIG.border_size - UI_CONFIG.button_size
     button_y = rect.y + UI_CONFIG.border_size
     self._exp_button.render(rl.Rectangle(button_x, button_y, UI_CONFIG.button_size, UI_CONFIG.button_size))
-    self._hello_button.render(rl.Rectangle(button_x - 600, button_y + 600, UI_CONFIG.button_size, UI_CONFIG.button_size))
+    self._hello_button._render()
 
   def handle_mouse_event(self) -> bool:
     return bool(self._exp_button.handle_mouse_event() or self._hello_button.handle_mouse_event())
