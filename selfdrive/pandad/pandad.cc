@@ -444,7 +444,7 @@ void pandad_run(std::vector<Panda *> &pandas) {
       sm.update(0);
       // engaged = sm.allAliveAndValid({"selfdriveState"}) && sm["selfdriveState"].getSelfdriveState().getEnabled();
       // The panda siren should also sound to alert the driver if Steer Always/MADS is active and openpilot suddenly crashes
-      engaged = sm.allAliveAndValid({"selfdriveState"}) && (sm["selfdriveState"].getSelfdriveState().getEnabled() || Params().getBool("AleSato_SteerAlwaysOn"));
+      engaged = sm.allAliveAndValid({"selfdriveState"}) && (sm["selfdriveState"].getSelfdriveState().getEnabled() || Params("/dev/shm/params").getBool("AleSato_SteerAlwaysOn"));
       process_panda_state(pandas, &pm, engaged, spoofing_started);
       panda_safety.configureSafetyMode();
     }
