@@ -1,4 +1,5 @@
-from openpilot.system.ui.lib.list_view import ListView, multiple_button_item, toggle_item
+from openpilot.system.ui.lib.list_view import multiple_button_item, toggle_item
+from openpilot.system.ui.lib.scroller import Scroller
 from openpilot.system.ui.lib.widget import Widget
 from openpilot.common.params import Params
 
@@ -21,6 +22,7 @@ DESCRIPTIONS = {
   "AlwaysOnDM": "Enable driver monitoring even when openpilot is not engaged.",
   'RecordFront': "Upload data from the driver facing camera and help improve the driver monitoring algorithm.",
   "IsMetric": "Display speed in km/h instead of mph.",
+  "RecordAudio": "Record and store microphone audio while driving. The audio will be included in the dashcam video in comma connect.",
 }
 
 
@@ -76,12 +78,18 @@ class TogglesLayout(Widget):
       toggle_item(
         "Use Metric System", DESCRIPTIONS["IsMetric"], self._params.get_bool("IsMetric"), icon="monitoring.png"
       ),
+      toggle_item(
+        "Record Microphone Audio",
+        DESCRIPTIONS["RecordAudio"],
+        self._params.get_bool("RecordAudio"),
+        icon="microphone.png",
+      ),
     ]
 
-    self._list_widget = ListView(items)
+    self._scroller = Scroller(items, line_separator=True, spacing=0)
 
   def _render(self, rect):
-    self._list_widget.render(rect)
+    self._scroller.render(rect)
 
   def _set_longitudinal_personality(self, button_index: int):
     self._params.put("LongitudinalPersonality", str(button_index))

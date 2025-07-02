@@ -67,6 +67,9 @@ static void update_state(UIState *s) {
     scene.blinkerstatus = cs_data.getLeftBlinker()? 1 : cs_data.getRightBlinker()? 2 : 0;
   }
   // End Ale Sato blinker indicator
+
+  auto params = Params();
+  scene.recording_audio = params.getBool("RecordAudio") && scene.started;
 }
 
 void ui_update_params(UIState *s) {
