@@ -40,12 +40,15 @@ def ffmpeg_mp4_concat_wrap_process_builder(file_list, cameratype, chunk_size=102
   command_line = ["ffmpeg"]
   if not cameratype == "qcamera":
     command_line += ["-f", "hevc"]
+    command_line += ["-vtag", "hvc1"]
   command_line += ["-r", "20"]
   command_line += ["-i", "concat:" + file_list]
   command_line += ["-c", "copy"]
-  command_line += ["-map", "0"]
   if not cameratype == "qcamera":
-    command_line += ["-vtag", "hvc1"]
+    command_line += ["-map", "0"]
+  else:
+    command_line += ["-map", "0:v?", "-map", "0:a?"]
+    command_line += ["-c:a", "aac", "-ar", "44100"] # Convert audio to AAC if exists
   command_line += ["-f", "mp4"]
   command_line += ["-movflags", "empty_moov"]
   command_line += ["-"]
@@ -53,6 +56,7 @@ def ffmpeg_mp4_concat_wrap_process_builder(file_list, cameratype, chunk_size=102
     command_line, stdout=subprocess.PIPE,
     bufsize=chunk_size
   )
+
 def ffmpeg_mp4_wrap_process_builder(filename):
   """Returns a process that will wrap the given filename
      inside an mp4 container, for easier playback by browsers
@@ -66,18 +70,25 @@ def ffmpeg_mp4_wrap_process_builder(filename):
   """
   basename = filename.rsplit("/")[-1]
   extension = basename.rsplit(".")[-1]
-  command_line = ["ffmpeg"]
-  if extension == "hevc":
+  command_line = ["ffmpeg", "-flags", "low_delay", "-i", filename]
+
+  if extension == "ts":
+    # For TS files (qcamera) containing video + audio
+    command_line += ["-map", "0:v?"]  # video stream
+    command_line += ["-map", "0:a?"]  # audio stream
+    command_line += ["-c:a", "aac", "-ar", "44100", "-dn"]
+  elif extension == "hevc":
+    # For HEVC files (no audio)
     command_line += ["-f", "hevc"]
-  command_line += ["-r", "20"]
-  command_line += ["-i", filename]
-  command_line += ["-c", "copy"]
-  command_line += ["-map", "0"]
-  if extension == "hevc":
-    command_line += ["-vtag", "hvc1"]
-  command_line += ["-f", "mp4"]
-  command_line += ["-movflags", "empty_moov"]
-  command_line += ["-"]
+    command_line += ["-map", "0"]    # map all streams (only video in this case)
+    command_line += ["-vtag", "hvc1"] # required for HEVC in MP4
+
+  command_line += ["-c:v", "copy"] # copy video without re-encoding
+  command_line += ["-r", "20"]       # force 20 FPS (if needed)
+  command_line += ["-f", "mp4"]      # output format
+  command_line += ["-movflags", "frag_keyframe+empty_moov+faststart"] # allows streaming without file completion
+  command_line += ["-"]              # output to stdout
+
   return subprocess.Popen(
     command_line, stdout=subprocess.PIPE
   )
