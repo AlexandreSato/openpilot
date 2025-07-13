@@ -311,23 +311,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Steering lag calibration is %1% complete.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Steering lag calibration is complete.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Steering torque response calibration is %1% complete.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Steering torque response calibration is complete.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>openpilot is continuously calibrating, resetting is rarely required. Resetting calibration will restart openpilot if the car is powered on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>
+
+Steering lag calibration is %1% complete.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>
+
+Steering lag calibration is complete.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> Steering torque response calibration is %1% complete.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> Steering torque response calibration is complete.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -475,10 +479,6 @@ El Modo Firehose te permite maximizar las subidas de datos de entrenamiento para
         <translation>Se está descargando una actualización del sistema operativo de su dispositivo en segundo plano. Se le pedirá que actualice cuando esté listo para instalarse.</translation>
     </message>
     <message>
-        <source>Device failed to register. It will not connect to or upload to comma.ai servers, and receives no support from comma.ai. If this is an official device, visit https://comma.ai/support.</source>
-        <translation>El dispositivo no pudo registrarse. No se conectará ni subirá datos a los servidores de comma.ai y no recibe soporte de comma.ai. Si este es un dispositivo oficial, visite https://comma.ai/support.</translation>
-    </message>
-    <message>
         <source>NVMe drive not mounted.</source>
         <translation>Unidad NVMe no montada.</translation>
     </message>
@@ -493,6 +493,10 @@ El Modo Firehose te permite maximizar las subidas de datos de entrenamiento para
     <message>
         <source>openpilot detected a change in the device&apos;s mounting position. Ensure the device is fully seated in the mount and the mount is firmly secured to the windshield.</source>
         <translation>openpilot detectó un cambio en la posición de montaje del dispositivo. Asegúrese de que el dispositivo esté completamente asentado en el soporte y que el soporte esté firmemente asegurado al parabrisas.</translation>
+    </message>
+    <message>
+        <source>Device failed to register with the comma.ai backend. It will not connect or upload to comma.ai servers, and receives no support from comma.ai. If this is a device purchased at comma.ai/shop, open a ticket at https://comma.ai/support.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1160,6 +1164,14 @@ If you&apos;d like to proceed, use https://flash.comma.ai to restore your device
     </message>
     <message>
         <source> Changing this setting will restart openpilot if the car is powered on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record and Upload Microphone Audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record and store microphone audio while driving. The audio will be included in the dashcam video in comma connect.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
