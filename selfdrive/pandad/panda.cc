@@ -252,13 +252,89 @@ bool Panda::can_receive(std::vector<can_frame>& out_vec) {
   bool ret = true;
   if (recv > 0) {
     receive_buffer_size += recv;
-    ret = unpack_can_buffer(receive_buffer, receive_buffer_size, out_vec);
+    // ret = unpack_can_buffer(receive_buffer, receive_buffer_size, out_vec);
+    ret = unpack_flexray_buffer(receive_buffer, receive_buffer_size, out_vec);
   }
   return ret;
 }
 
 void Panda::can_reset_communications() {
   handle->control_write(0xc0, 0, 0);
+}
+
+#pragma pack(push, 1)
+struct flexray_frame_t {
+  uint8_t startup_frame_indicator;
+  uint8_t sync_frame_indicator;
+  uint8_t null_frame_indicator;
+  uint8_t payload_preamble_indicator;
+  uint8_t reserved_bit;
+  uint8_t _pad1;
+  uint16_t frame_id;
+  uint8_t payload_length_words;
+  uint8_t _pad2;
+  uint16_t header_crc;
+  uint8_t cycle_count;
+  char payload[254];
+  uint8_t _pad3;
+  uint32_t payload_crc;
+  uint8_t source;
+  uint8_t _pad4[3];
+};
+#pragma pack(pop)
+
+static uint32_t calculate_flexray_header_crc(const flexray_frame_t &frame) {
+  uint32_t data_word = 0;
+  data_word |= (uint32_t)frame.sync_frame_indicator << 19;
+  data_word |= (uint32_t)frame.startup_frame_indicator << 18;
+  data_word |= (uint32_t)frame.frame_id << 7;
+  data_word |= (uint32_t)frame.payload_length_words;
+
+  uint32_t crc = 0x1A;
+  const uint32_t poly = 0x385;
+
+  for (int i = 19; i >= 0; --i) {
+    bool data_bit = (data_word >> i) & 1;
+    bool crc_msb = (crc >> 10) & 1;
+
+    crc <<= 1;
+    if (data_bit ^ crc_msb) {
+      crc ^= poly;
+    }
+  }
+
+  return crc & 0x7FF;
+}
+
+bool Panda::unpack_flexray_buffer(uint8_t *data, uint32_t &size, std::vector<can_frame> &out_vec) {
+  int pos = 0;
+  while (pos <= (int)size - (int)sizeof(flexray_frame_t)) {
+    flexray_frame_t *frame = (flexray_frame_t *)&data[pos];
+
+    bool potential_frame = (frame->startup_frame_indicator <= 1 &&
+                              frame->sync_frame_indicator <= 1 &&
+                              frame->null_frame_indicator <= 1 &&
+                              frame->payload_preamble_indicator <= 1 &&
+                              frame->reserved_bit <= 1 &&
+                              frame->payload_length_words <= 127);
+
+    if (potential_frame && calculate_flexray_header_crc(*frame) == frame->header_crc) {
+      can_frame &canData = out_vec.emplace_back();
+      canData.address = frame->frame_id;
+      canData.src = frame->source;
+      size_t payload_len = std::min((size_t)frame->payload_length_words * 2, sizeof(frame->payload));
+      canData.dat.assign(frame->payload, payload_len);
+      pos += sizeof(flexray_frame_t);
+    } else {
+      pos++;
+    }
+  }
+
+  // FlexRay is high-speed, so we process the whole buffer at once and discard any remaining partial data.
+  // This prevents buffer overflow from incomplete frames.
+  size = 0;
+
+  return true;
 }
 
 bool Panda::unpack_can_buffer(uint8_t *data, uint32_t &size, std::vector<can_frame> &out_vec) {
