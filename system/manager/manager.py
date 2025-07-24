@@ -8,7 +8,7 @@ import traceback
 from cereal import log
 import cereal.messaging as messaging
 import openpilot.system.sentry as sentry
-from openpilot.common.params import Params, ParamKeyType
+from openpilot.common.params import Params, ParamKeyFlag
 from openpilot.common.text_window import TextWindow
 from openpilot.system.hardware import HARDWARE
 from openpilot.system.manager.helpers import unblock_stdout, write_onroad_params, save_bootlog
@@ -26,44 +26,21 @@ def manager_init() -> None:
   build_metadata = get_build_metadata()
 
   params = Params()
-  params.clear_all(ParamKeyType.CLEAR_ON_MANAGER_START)
-  params.clear_all(ParamKeyType.CLEAR_ON_ONROAD_TRANSITION)
-  params.clear_all(ParamKeyType.CLEAR_ON_OFFROAD_TRANSITION)
-  params.clear_all(ParamKeyType.CLEAR_ON_IGNITION_ON)
+  params.clear_all(ParamKeyFlag.CLEAR_ON_MANAGER_START)
+  params.clear_all(ParamKeyFlag.CLEAR_ON_ONROAD_TRANSITION)
+  params.clear_all(ParamKeyFlag.CLEAR_ON_OFFROAD_TRANSITION)
+  params.clear_all(ParamKeyFlag.CLEAR_ON_IGNITION_ON)
   if build_metadata.release_channel:
-    params.clear_all(ParamKeyType.DEVELOPMENT_ONLY)
-
-  default_params: list[tuple[str, str | bytes]] = [
-    ("AleSato_AutomaticBrakeHold", "0"),
-    ("AleSato_CustomCarApi", "1"),
-    ("AleSato_SecondBoot", "0"),
-    ("CompletedTrainingVersion", "0"),
-    ("DisengageOnAccelerator", "1"),
-    ("SshEnabled", "1"),
-    ("GithubUsername", "AlexandreSato"),
-    ("GithubSshKeys", "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCUfU4ymJdRned22jes0n0qI1vSSreusRsSS1pFcCroGGkfYU1\
-     ZTKuURGtBxcJSw5HEIdWRQfbmdGJBH/k+C1Y3hmgBkbJir+xwp28YeMdT8ZPEIzi6TQdJBee9LplHgxbrOP9M559Copf6lnyJdVQphKPO\
-     l91W/fOgC/xvKeS5v2CNiZCYgAIJsOtgIv1aw+wZVNhPTIda1Sv+6Gj5uk3YBvGcSwSvQBbXORJvaBuJAv0kVL0nLGv8OtQTmNrMsmR17\
-     +lHeVkkfFAaNE3E3QtPCCgpClp5FSbw5SpbYAqVk2MTIjfSGHDzYckT46l63gYHWSIHlqR5peIY/5hPUt6paDLdLwM50s5azwtMqZcZ+x\
-     Y1QEu6wzQDTb+Z2JUm/VtjOmmnRBbXKuDNJ7HKOTvrmZcmbcr3wsTPC8VRHjrxR1TPoTwLYgwonaVlyFwP1W7KPYci6LG9xJraRQ/2W1z\
-     GupzmsoF3Zz5Uz01owrQCCpdRr2mbBSCupZjDgqs6lNhkWPPUEgkbm2t2nPCJyq0E0XjwmE+CrlPaE2SuKN3BJ3OmY46cyrtxmKgGfLxC\
-     +ZXFs10B4A2GCMuZhKm4WjlmfC8pDgr0PBMW/xYPLpYdEuDavPOXG/AViGHZlL0BIviihoZ1YbtuGFq2LTPL2IaM4l02x+Cqb2gztqc4m\
-     CVUGQ=="),
-    ("GsmMetered", "0"),
-    ("HasAcceptedTerms", "0"),
-    ("IsMetric", "1"),
-    ("LanguageSetting", "main_pt-BR"),
-    ("OpenpilotEnabledToggle", "1"),
-    ("LongitudinalPersonality", str(log.LongitudinalPersonality.standard)),
-  ]
+    params.clear_all(ParamKeyFlag.DEVELOPMENT_ONLY)
 
   if params.get_bool("RecordFrontLock"):
     params.put_bool("RecordFront", True)
 
-  # set unset params
-  for k, v in default_params:
-    if params.get(k) is None:
-      params.put(k, v)
+  # set unset params to their default value
+  for k in params.all_keys():
+    default_value = params.get_default_value(k)
+    if default_value and not params.get(k):
+      params.put(k, default_value)
 
   # Create folders needed for msgq
   try:
@@ -135,7 +112,7 @@ def manager_thread() -> None:
   params = Params()
 
   ignore: list[str] = []
-  if params.get("DongleId", encoding='utf8') in (None, UNREGISTERED_DONGLE_ID):
+  if params.get("DongleId") in (None, UNREGISTERED_DONGLE_ID):
     ignore += ["manage_athenad", "uploader"]
   if os.getenv("NOBOARD") is not None:
     ignore.append("pandad")
@@ -156,13 +133,13 @@ def manager_thread() -> None:
     started = sm['deviceState'].started
 
     if started and not started_prev:
-      params.clear_all(ParamKeyType.CLEAR_ON_ONROAD_TRANSITION)
+      params.clear_all(ParamKeyFlag.CLEAR_ON_ONROAD_TRANSITION)
     elif not started and started_prev:
-      params.clear_all(ParamKeyType.CLEAR_ON_OFFROAD_TRANSITION)
+      params.clear_all(ParamKeyFlag.CLEAR_ON_OFFROAD_TRANSITION)
 
     ignition = any(ps.ignitionLine or ps.ignitionCan for ps in sm['pandaStates'] if ps.pandaType != log.PandaState.PandaType.unknown)
     if ignition and not ignition_prev:
-      params.clear_all(ParamKeyType.CLEAR_ON_IGNITION_ON)
+      params.clear_all(ParamKeyFlag.CLEAR_ON_IGNITION_ON)
 
     # update onroad params, which drives pandad's safety setter thread
     if started != started_prev:
