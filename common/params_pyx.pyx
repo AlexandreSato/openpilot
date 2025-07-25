@@ -97,22 +97,22 @@ cdef class Params:
     except (TypeError, ValueError):
       return self.cast(t, default, None)
 
-  def get(self, key, bool block=False):
+  def get(self, key, bool block=False, bool return_default=False):
     cdef string k = self.check_key(key)
     cdef ParamKeyType t = self.p.getKeyType(k)
     cdef string val
     with nogil:
       val = self.p.get(k, block)
 
-    default = self.get_default_value(k)
+    default_val = self.get_default_value(k) if return_default else None
     if val == b"":
       if block:
         # If we got no value while running in blocked mode
         # it means we got an interrupt while waiting
         raise KeyboardInterrupt
       else:
-        return self.cast(t, default, None)
-    return self.cast(t, val, default)
+        return self.cast(t, default_val, None)
+    return self.cast(t, val, default_val)
 
   def get_bool(self, key, bool block=False):
     cdef string k = self.check_key(key)
@@ -157,6 +157,9 @@ cdef class Params:
   def get_param_path(self, key=""):
     cdef string key_bytes = ensure_bytes(key)
     return self.p.getParamPath(key_bytes).decode("utf-8")
+
+  def get_type(self, key):
+    return self.p.getKeyType(self.check_key(key))
 
   def all_keys(self):
     return self.p.allKeys()

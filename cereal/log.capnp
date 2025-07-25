@@ -128,13 +128,14 @@ struct OnroadEvent @0xc4fa6047f024e718 {
     personalityChanged @91;
     aeb @92;
     userFlag @95;
+    excessiveActuation @96;
 
 
     # AleSato events
-    manualSteeringRequired @96;
-    steerAlwaysEngageSound @97;
-    steerAlwaysDisengageSound @98;
-    automaticBrakehold @99;
+    manualSteeringRequired @97;
+    steerAlwaysEngageSound @98;
+    steerAlwaysDisengageSound @99;
+    automaticBrakehold @100;
 
 
     soundsUnavailableDEPRECATED @47;
