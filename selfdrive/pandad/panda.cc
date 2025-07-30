@@ -275,11 +275,11 @@ struct flexray_frame_t {
   uint8_t _pad2;
   uint16_t header_crc;
   uint8_t cycle_count;
-  char payload[254];
+  char payload[MAX_FRAME_PAYLOAD_BYTES];
   uint8_t _pad3;
   uint32_t payload_crc;
   uint8_t source;
-  uint8_t _pad4[3];
+  uint8_t _pad4[1];
 };
 #pragma pack(pop)
 

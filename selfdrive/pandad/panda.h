@@ -25,6 +25,8 @@
 
 #define PANDA_BUS_OFFSET 4
 
+#define MAX_FRAME_PAYLOAD_BYTES 64
+
 struct __attribute__((packed)) can_header {
   uint8_t reserved : 1;
   uint8_t bus : 3;
