@@ -3,6 +3,8 @@
 #include <cmath>
 
 #include "selfdrive/ui/qt/util.h"
+// #include "common/swaglog.h"
+#include "common/params.h"
 
 constexpr int SET_SPEED_NA = 255;
 
@@ -101,38 +103,58 @@ void HudRenderer::drawSetSpeed(QPainter &p, const QRect &surface_rect) {
   p.drawText(set_speed_rect.adjusted(0, 77, 0, 0), Qt::AlignTop | Qt::AlignHCenter, setSpeedStr);
 
   // Begin Ale Sato
-  QString engineRPMStr = engineColorSpeed? QString::number(std::nearbyint(enginerpm)) : "OFF";
-  int my_rect_width = 344;
-  int my_rect_height = 204;
-  int my_top_radius = 32;
-  int my_bottom_radius = 32;
+  bool isToyotaHybrid = false;
+  Params params;
+  auto cp_bytes = params.get("CarParamsPersistent");
+  if (!cp_bytes.empty()) {
+    AlignedBuffer aligned_buf;
+    capnp::FlatArrayMessageReader cmsg(aligned_buf.align(cp_bytes.data(), cp_bytes.size()));
+    cereal::CarParams::Reader CP = cmsg.getRoot<cereal::CarParams>();
+    QString car_brand = QString::fromStdString(CP.getBrand());
+    // LOGW("CAR BRAND: %s ",  car_brand.toStdString().c_str());
+    if (car_brand == "toyota") {
+      constexpr uint64_t TOYOTA_FLAG_HYBRID = 0x1;
+      if (CP.getFlags() & TOYOTA_FLAG_HYBRID) {
+        // LOGW("HYBRID!");
+        isToyotaHybrid = true;
+      }
+    }
+  }
 
-  QRect my_engine_rpm_rect(20, 450, my_rect_width, my_rect_height);
-  p.setPen(QPen(whiteColor(75), 6));
-  p.setBrush(blackColor(166));
-  drawRoundedRect(p, my_engine_rpm_rect, my_top_radius, my_top_radius, my_bottom_radius, my_bottom_radius);
+  if (isToyotaHybrid) {
+    QString engineRPMStr = engineColorSpeed? QString::number(std::nearbyint(enginerpm)) : "OFF";
+    int my_rect_width = 344;
+    int my_rect_height = 204;
+    int my_top_radius = 32;
+    int my_bottom_radius = 32;
 
-  // Draw colored ENGINE RPM
-  p.setPen(interpColor(
-    enginerpm,
-    {1500, 2100, 3000},
-    {QColor(0x80, 0xd8, 0xa6, 0xff), QColor(0xff, 0xe4, 0xbf, 0xff), QColor(0xff, 0xbf, 0xbf, 0xff)}
-  ));
-  p.setFont(InterFont(40, QFont::DemiBold));
-  p.drawText(my_engine_rpm_rect.adjusted(0, 97, 0, 0), Qt::AlignTop | Qt::AlignCenter, tr("ENGINE RPM"));
+    QRect my_engine_rpm_rect(20, 450, my_rect_width, my_rect_height);
+    p.setPen(QPen(whiteColor(75), 6));
+    p.setBrush(blackColor(166));
+    drawRoundedRect(p, my_engine_rpm_rect, my_top_radius, my_top_radius, my_bottom_radius, my_bottom_radius);
 
-  // Draw colored RPM numbers
-  if (engineColorSpeed) {
+    // Draw colored ENGINE RPM
     p.setPen(interpColor(
       enginerpm,
       {1500, 2100, 3000},
-      {whiteColor(), QColor(0xff, 0x95, 0x00, 0xff), QColor(0xff, 0x00, 0x00, 0xff)}
+      {QColor(0x80, 0xd8, 0xa6, 0xff), QColor(0xff, 0xe4, 0xbf, 0xff), QColor(0xff, 0xbf, 0xbf, 0xff)}
     ));
-  } else {
-    p.setPen(QColor(0x72, 0x72, 0x72, 0xff));
+    p.setFont(InterFont(40, QFont::DemiBold));
+    p.drawText(my_engine_rpm_rect.adjusted(0, 97, 0, 0), Qt::AlignTop | Qt::AlignCenter, tr("ENGINE RPM"));
+
+    // Draw colored RPM numbers
+    if (engineColorSpeed) {
+      p.setPen(interpColor(
+        enginerpm,
+        {1500, 2100, 3000},
+        {whiteColor(), QColor(0xff, 0x95, 0x00, 0xff), QColor(0xff, 0x00, 0x00, 0xff)}
+      ));
+    } else {
+      p.setPen(QColor(0x72, 0x72, 0x72, 0xff));
+    }
+    p.setFont(InterFont(90, QFont::Bold));
+    p.drawText(my_engine_rpm_rect.adjusted(0, 17, 0, 0), Qt::AlignTop | Qt::AlignHCenter,  engineRPMStr);
   }
-  p.setFont(InterFont(90, QFont::Bold));
-  p.drawText(my_engine_rpm_rect.adjusted(0, 17, 0, 0), Qt::AlignTop | Qt::AlignHCenter,  engineRPMStr);
   // End AleSato
 
 // Begin2 Ale Sato
