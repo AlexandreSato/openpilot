@@ -323,7 +323,8 @@ bool Panda::unpack_flexray_buffer(uint8_t *data, uint32_t &size, std::vector<can
       canData.address = frame->frame_id;
       canData.src = frame->source;
       size_t payload_len = std::min((size_t)frame->payload_length_words * 2, sizeof(frame->payload));
-      canData.dat.assign(frame->payload, payload_len);
+      canData.dat.assign(1, frame->cycle_count);
+      canData.dat.append(frame->payload, payload_len);
       pos += sizeof(flexray_frame_t);
     } else {
       pos++;
