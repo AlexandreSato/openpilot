@@ -262,33 +262,11 @@ void Panda::can_reset_communications() {
   handle->control_write(0xc0, 0, 0);
 }
 
-#pragma pack(push, 1)
-struct flexray_frame_t {
-  uint8_t startup_frame_indicator;
-  uint8_t sync_frame_indicator;
-  uint8_t null_frame_indicator;
-  uint8_t payload_preamble_indicator;
-  uint8_t reserved_bit;
-  uint8_t _pad1;
-  uint16_t frame_id;
-  uint8_t payload_length_words;
-  uint8_t _pad2;
-  uint16_t header_crc;
-  uint8_t cycle_count;
-  char payload[MAX_FRAME_PAYLOAD_BYTES];
-  uint8_t _pad3;
-  uint32_t payload_crc;
-  uint8_t source;
-  uint8_t _pad4[1];
-};
-#pragma pack(pop)
-
 static uint32_t calculate_flexray_header_crc(const flexray_frame_t &frame) {
   uint32_t data_word = 0;
-  data_word |= (uint32_t)frame.sync_frame_indicator << 19;
-  data_word |= (uint32_t)frame.startup_frame_indicator << 18;
-  data_word |= (uint32_t)frame.frame_id << 7;
   data_word |= (uint32_t)frame.payload_length_words;
+  data_word |= (uint32_t)frame.frame_id << 7;
+  data_word |= (uint32_t)frame.indicators << (7+11+0);
 
   uint32_t crc = 0x1A;
   const uint32_t poly = 0x385;
@@ -306,19 +284,53 @@ static uint32_t calculate_flexray_header_crc(const flexray_frame_t &frame) {
   return crc & 0x7FF;
 }
 
+static uint32_t calculate_flexray_payload_crc(const flexray_frame_t &frame) {
+  uint32_t payload_bits = frame.payload_length_words * 16;
+  uint32_t total_bits_to_crc = 40 + payload_bits;
+
+  uint32_t crc = 0xFEDCBA;
+  const uint32_t poly = 0x5D6DCB;
+
+  auto get_bit = [&](int bit_pos) {
+    int byte_pos = bit_pos / 8;
+    int bit_in_byte = 7 - (bit_pos % 8);
+
+    if (byte_pos < 5) {
+      uint8_t header_buf[5];
+      header_buf[0] =
+        (frame.indicators << 3) |
+        ((frame.frame_id >> 8) & 0b111);
+      header_buf[1] = frame.frame_id & 0xFF;
+      header_buf[2] = ((frame.payload_length_words << 1) | ((frame.header_crc >> 10) & 0b1));
+      header_buf[3] = (frame.header_crc >> 2) & 0xFF;
+      header_buf[4] = ((frame.header_crc & 0b11) << 6) | (frame.cycle_count & 0b111111);
+      return (header_buf[byte_pos] >> bit_in_byte) & 1;
+    } else {
+      return (frame.payload[byte_pos - 5] >> bit_in_byte) & 1;
+    }
+  };
+
+  for (uint32_t i = 0; i < total_bits_to_crc; ++i) {
+    bool data_bit = get_bit(i);
+    bool crc_msb = (crc >> 23) & 1;
+    crc <<= 1;
+    if (data_bit ^ crc_msb) {
+      crc ^= poly;
+    }
+  }
+
+  return crc & 0xFFFFFF;
+}
+
 bool Panda::unpack_flexray_buffer(uint8_t *data, uint32_t &size, std::vector<can_frame> &out_vec) {
   int pos = 0;
   while (pos <= (int)size - (int)sizeof(flexray_frame_t)) {
     flexray_frame_t *frame = (flexray_frame_t *)&data[pos];
 
-    bool potential_frame = (frame->startup_frame_indicator <= 1 &&
-                              frame->sync_frame_indicator <= 1 &&
-                              frame->null_frame_indicator <= 1 &&
-                              frame->payload_preamble_indicator <= 1 &&
-                              frame->reserved_bit <= 1 &&
-                              frame->payload_length_words <= 127);
-
-    if (potential_frame && calculate_flexray_header_crc(*frame) == frame->header_crc) {
+    bool potential_frame = (frame->frame_id <= 0x7FF && frame->payload_length_words <= 127);
+    if (potential_frame &&
+      calculate_flexray_header_crc(*frame) == frame->header_crc &&
+      calculate_flexray_payload_crc(*frame) == frame->payload_crc) {
       can_frame &canData = out_vec.emplace_back();
       canData.address = frame->frame_id;
       canData.src = frame->source;

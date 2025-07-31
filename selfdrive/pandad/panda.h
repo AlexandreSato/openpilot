@@ -44,6 +44,19 @@ struct can_frame {
   long src;
 };
 
+struct flexray_frame_t {
+  uint32_t payload_crc; // 24 bits
+
+  uint16_t frame_id;                  // 11 bits
+  uint16_t header_crc;                // 11 bits
+
+  uint8_t indicators;                 // 5 bit
+  uint8_t payload_length_words;       // 7 bits (number of 16-bit words)
+  uint8_t cycle_count;                // 6 bits
+  uint8_t source; // from ecu or vehicle
+  char payload[MAX_FRAME_PAYLOAD_BYTES];
+} ;
+
 
 class Panda {
 private:
