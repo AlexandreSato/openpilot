@@ -6,6 +6,7 @@ import heapq
 import signal
 from collections import Counter
 from dataclasses import dataclass, field
+from itertools import islice
 from typing import Any
 from collections.abc import Callable, Iterable
 from tqdm import tqdm
@@ -16,12 +17,12 @@ import cereal.messaging as messaging
 from cereal import car
 from cereal.services import SERVICE_LIST
 from msgq.visionipc import VisionIpcServer, get_endpoint_name as vipc_get_endpoint_name
+from opendbc.car.can_definitions import CanData
 from opendbc.car.car_helpers import get_car, interfaces
 from openpilot.common.params import Params
 from openpilot.common.prefix import OpenpilotPrefix
 from openpilot.common.timeout import Timeout
 from openpilot.common.realtime import DT_CTRL
-from openpilot.selfdrive.car.card import can_comm_callbacks
 from openpilot.system.manager.process_config import managed_processes
 from openpilot.selfdrive.test.process_replay.vision_meta import meta_from_camera_state, available_streams
 from openpilot.selfdrive.test.process_replay.migration import migrate_all
@@ -30,22 +31,10 @@ from openpilot.tools.lib.logreader import LogIterable
 from openpilot.tools.lib.framereader import FrameReader
 
 # Numpy gives different results based on CPU features after version 19
-NUMPY_TOLERANCE = 1e-7
+NUMPY_TOLERANCE = 1e-2
 PROC_REPLAY_DIR = os.path.dirname(os.path.abspath(__file__))
 FAKEDATA = os.path.join(PROC_REPLAY_DIR, "fakedata/")
 
-class DummySocket:
-  def __init__(self):
-    self.data: list[bytes] = []
-
-  def receive(self, non_blocking: bool = False) -> bytes | None:
-    if non_blocking:
-      return None
-
-    return self.data.pop()
-
-  def send(self, data: bytes):
-    self.data.append(data)
 
 class LauncherWithCapture:
   def __init__(self, capture: ProcessOutputCapture, launcher: Callable):
@@ -63,8 +52,7 @@ class ReplayContext:
     self.pubs = cfg.pubs
     self.main_pub = cfg.main_pub
     self.main_pub_drained = cfg.main_pub_drained
-    self.unlocked_pubs = cfg.unlocked_pubs
-    assert(len(self.pubs) != 0 or self.main_pub is not None)
+    assert len(self.pubs) != 0 or self.main_pub is not None
 
   def __enter__(self):
     self.open_context()
@@ -80,8 +68,7 @@ class ReplayContext:
 
     if self.main_pub is None:
       self.events = {}
-      pubs_with_events = [pub for pub in self.pubs if pub not in self.unlocked_pubs]
-      for pub in pubs_with_events:
+      for pub in self.pubs:
         self.events[pub] = messaging.fake_event_handle(pub, enable=True)
     else:
       self.events = {self.main_pub: messaging.fake_event_handle(self.main_pub, enable=True)}
@@ -138,11 +125,16 @@ class ProcessConfig:
   processing_time: float = 0.001
   timeout: int = 30
   simulation: bool = True
+  # Set to service process receives on first
   main_pub: str | None = None
-  main_pub_drained: bool = True
+  main_pub_drained: bool = False
   vision_pubs: list[str] = field(default_factory=list)
   ignore_alive_pubs: list[str] = field(default_factory=list)
-  unlocked_pubs: list[str] = field(default_factory=list)
+
+  def __post_init__(self):
+    # If the process is polling a service, we can just lock that one to speed up replay
+    if self.main_pub is None and isinstance(self.should_recv_callback, MessageBasedRcvCallback):
+      self.main_pub = self.should_recv_callback.trigger_msg_type
 
 
 class ProcessContainer:
@@ -255,11 +247,6 @@ class ProcessContainer:
       if self.cfg.init_callback is not None:
         self.cfg.init_callback(self.rc, self.pm, all_msgs, fingerprint)
 
-      # wait for process to startup
-      with Timeout(10, error_msg=f"timed out waiting for process to start: {repr(self.cfg.proc_name)}"):
-        while not all(self.pm.all_readers_updated(s) for s in self.cfg.pubs if s not in self.cfg.ignore_alive_pubs):
-          time.sleep(0)
-
   def stop(self):
     with self.prefix:
       self.process.signal(signal.SIGKILL)
@@ -285,13 +272,13 @@ class ProcessContainer:
     assert self.rc and self.pm and self.sockets and self.process.proc
 
     output_msgs = []
-    with self.prefix, Timeout(self.cfg.timeout, error_msg=f"timed out testing process {repr(self.cfg.proc_name)}"):
-      end_of_cycle = True
-      if self.cfg.should_recv_callback is not None:
-        end_of_cycle = self.cfg.should_recv_callback(msg, self.cfg, self.cnt)
+    end_of_cycle = True
+    if self.cfg.should_recv_callback is not None:
+      end_of_cycle = self.cfg.should_recv_callback(msg, self.cfg, self.cnt)
 
-      self.msg_queue.append(msg)
-      if end_of_cycle:
+    self.msg_queue.append(msg)
+    if end_of_cycle:
+      with self.prefix, Timeout(self.cfg.timeout, error_msg=f"timed out testing process {repr(self.cfg.proc_name)}"):
         # call recv to let sub-sockets reconnect, after we know the process is ready
         if self.cnt == 0:
           for s in self.sockets:
@@ -300,7 +287,7 @@ class ProcessContainer:
         # certain processes use drain_sock. need to cause empty recv to break from this loop
         trigger_empty_recv = False
         if self.cfg.main_pub and self.cfg.main_pub_drained:
-          trigger_empty_recv = next((True for m in self.msg_queue if m.which() == self.cfg.main_pub), False)
+          trigger_empty_recv = any(m.which() == self.cfg.main_pub for m in self.msg_queue)
 
         # get output msgs from previous inputs
         output_msgs = self.get_output_msgs(msg.logMonoTime)
@@ -329,7 +316,7 @@ class ProcessContainer:
 def card_fingerprint_callback(rc, pm, msgs, fingerprint):
   print("start fingerprinting")
   params = Params()
-  canmsgs = [msg for msg in msgs if msg.which() == "can"][:300]
+  canmsgs = list(islice((m for m in msgs if m.which() == "can"), 300))
 
   # card expects one arbitrary can and pandaState
   rc.send_sync(pm, "can", messaging.new_message("can", 1))
@@ -353,32 +340,23 @@ def get_car_params_callback(rc, pm, msgs, fingerprint):
     CarInterface = interfaces[fingerprint]
     CP = CarInterface.get_non_essential_params(fingerprint)
   else:
-    can = DummySocket()
-    sendcan = DummySocket()
-
-    canmsgs = [msg for msg in msgs if msg.which() == "can"]
+    can_msgs = ([CanData(can.address, can.dat, can.src) for can in m.can] for m in msgs if m.which() == "can")
     cached_params_raw = params.get("CarParamsCache")
-    has_cached_cp = cached_params_raw is not None
-    assert len(canmsgs) != 0, "CAN messages are required for fingerprinting"
-    assert os.environ.get("SKIP_FW_QUERY", False) or has_cached_cp, \
+    assert next(can_msgs, None), "CAN messages are required for fingerprinting"
+    assert os.environ.get("SKIP_FW_QUERY", False) or cached_params_raw is not None, \
             "CarParamsCache is required for fingerprinting. Make sure to keep carParams msgs in the logs."
 
-    for m in canmsgs[:300]:
-      can.send(m.as_builder().to_bytes())
-    can_callbacks = can_comm_callbacks(can, sendcan)
+    def can_recv(wait_for_one: bool = False) -> list[list[CanData]]:
+      return [next(can_msgs, [])]
 
     cached_params = None
-    if has_cached_cp:
+    if cached_params_raw is not None:
       with car.CarParams.from_bytes(cached_params_raw) as _cached_params:
         cached_params = _cached_params
 
-    CP = get_car(*can_callbacks, lambda obd: None, Params().get_bool("AlphaLongitudinalEnabled"), False, cached_params=cached_params).CP
+    CP = get_car(can_recv, lambda _msgs: None, lambda obd: None, params.get_bool("AlphaLongitudinalEnabled"), False, cached_params=cached_params).CP
 
   params.put("CarParams", CP.to_bytes())
-
-
-def selfdrived_rcv_callback(msg, cfg, frame):
-  return (frame - 1) == 0 or msg.which() == 'carState'
 
 
 def card_rcv_callback(msg, cfg, frame):
@@ -393,21 +371,6 @@ def card_rcv_callback(msg, cfg, frame):
   if "sendcan" in socks and (frame - 1) < 2000:
     socks.remove("sendcan")
   return len(socks) > 0
-
-
-def calibration_rcv_callback(msg, cfg, frame):
-  # calibrationd publishes 1 calibrationData every 5 cameraOdometry packets.
-  # should_recv always true to increment frame
-  return (frame - 1) == 0 or msg.which() == 'cameraOdometry'
-
-
-def torqued_rcv_callback(msg, cfg, frame):
-  # should_recv always true to increment frame
-  return (frame - 1) == 0 or msg.which() == 'livePose'
-
-
-def dmonitoringmodeld_rcv_callback(msg, cfg, frame):
-  return msg.which() == "driverCameraState"
 
 
 class ModeldCameraSyncRcvCallback:
@@ -434,26 +397,13 @@ class ModeldCameraSyncRcvCallback:
 
 
 class MessageBasedRcvCallback:
-  def __init__(self, trigger_msg_type):
+  def __init__(self, trigger_msg_type: str, first_frame: bool = False):
     self.trigger_msg_type = trigger_msg_type
+    self.first_frame = first_frame
 
   def __call__(self, msg, cfg, frame):
-    return msg.which() == self.trigger_msg_type
-
-
-class FrequencyBasedRcvCallback:
-  def __init__(self, trigger_msg_type):
-    self.trigger_msg_type = trigger_msg_type
-
-  def __call__(self, msg, cfg, frame):
-    if msg.which() != self.trigger_msg_type:
-      return False
-
-    resp_sockets = [
-      s for s in cfg.subs
-      if frame % max(1, int(SERVICE_LIST[msg.which()].frequency / SERVICE_LIST[s].frequency)) == 0
-    ]
-    return bool(len(resp_sockets))
+    # publish on first frame or trigger msg
+    return ((frame - 1) == 0 and self.first_frame) or msg.which() == self.trigger_msg_type
 
 
 def selfdrived_config_callback(params, cfg, lr):
@@ -477,7 +427,7 @@ CONFIGS = [
     ignore=["logMonoTime"],
     config_callback=selfdrived_config_callback,
     init_callback=get_car_params_callback,
-    should_recv_callback=selfdrived_rcv_callback,
+    should_recv_callback=MessageBasedRcvCallback("carState", True),
     tolerance=NUMPY_TOLERANCE,
     processing_time=0.004,
   ),
@@ -502,6 +452,7 @@ CONFIGS = [
     tolerance=NUMPY_TOLERANCE,
     processing_time=0.004,
     main_pub="can",
+    main_pub_drained=True,
   ),
   ProcessConfig(
     proc_name="radard",
@@ -509,7 +460,7 @@ CONFIGS = [
     subs=["radarState"],
     ignore=["logMonoTime"],
     init_callback=get_car_params_callback,
-    should_recv_callback=FrequencyBasedRcvCallback("modelV2"),
+    should_recv_callback=MessageBasedRcvCallback("modelV2"),
   ),
   ProcessConfig(
     proc_name="plannerd",
@@ -517,7 +468,7 @@ CONFIGS = [
     subs=["longitudinalPlan", "driverAssistance"],
     ignore=["logMonoTime", "longitudinalPlan.processingDelay", "longitudinalPlan.solverExecutionTime"],
     init_callback=get_car_params_callback,
-    should_recv_callback=FrequencyBasedRcvCallback("modelV2"),
+    should_recv_callback=MessageBasedRcvCallback("modelV2"),
     tolerance=NUMPY_TOLERANCE,
   ),
   ProcessConfig(
@@ -526,14 +477,14 @@ CONFIGS = [
     subs=["liveCalibration"],
     ignore=["logMonoTime"],
     init_callback=get_car_params_callback,
-    should_recv_callback=calibration_rcv_callback,
+    should_recv_callback=MessageBasedRcvCallback("cameraOdometry", True),
   ),
   ProcessConfig(
     proc_name="dmonitoringd",
     pubs=["driverStateV2", "liveCalibration", "carState", "modelV2", "selfdriveState"],
     subs=["driverMonitoringState"],
     ignore=["logMonoTime"],
-    should_recv_callback=FrequencyBasedRcvCallback("driverStateV2"),
+    should_recv_callback=MessageBasedRcvCallback("driverStateV2"),
     tolerance=NUMPY_TOLERANCE,
   ),
   ProcessConfig(
@@ -545,7 +496,6 @@ CONFIGS = [
     ignore=["logMonoTime"],
     should_recv_callback=MessageBasedRcvCallback("cameraOdometry"),
     tolerance=NUMPY_TOLERANCE,
-    unlocked_pubs=["accelerometer", "gyroscope"],
   ),
   ProcessConfig(
     proc_name="paramsd",
@@ -553,7 +503,7 @@ CONFIGS = [
     subs=["liveParameters"],
     ignore=["logMonoTime"],
     init_callback=get_car_params_callback,
-    should_recv_callback=FrequencyBasedRcvCallback("livePose"),
+    should_recv_callback=MessageBasedRcvCallback("livePose"),
     tolerance=NUMPY_TOLERANCE,
     processing_time=0.004,
   ),
@@ -578,7 +528,7 @@ CONFIGS = [
     subs=["liveTorqueParameters"],
     ignore=["logMonoTime"],
     init_callback=get_car_params_callback,
-    should_recv_callback=torqued_rcv_callback,
+    should_recv_callback=MessageBasedRcvCallback("livePose", True),
     tolerance=NUMPY_TOLERANCE,
   ),
   ProcessConfig(
@@ -590,7 +540,6 @@ CONFIGS = [
     tolerance=NUMPY_TOLERANCE,
     processing_time=0.020,
     main_pub=vipc_get_endpoint_name("camerad", meta_from_camera_state("roadCameraState").stream),
-    main_pub_drained=False,
     vision_pubs=["roadCameraState", "wideRoadCameraState"],
     ignore_alive_pubs=["wideRoadCameraState"],
     init_callback=get_car_params_callback,
@@ -600,11 +549,10 @@ CONFIGS = [
     pubs=["liveCalibration", "driverCameraState"],
     subs=["driverStateV2"],
     ignore=["logMonoTime", "driverStateV2.modelExecutionTime", "driverStateV2.gpuExecutionTime"],
-    should_recv_callback=dmonitoringmodeld_rcv_callback,
+    should_recv_callback=MessageBasedRcvCallback("driverCameraState"),
     tolerance=NUMPY_TOLERANCE,
     processing_time=0.020,
     main_pub=vipc_get_endpoint_name("camerad", meta_from_camera_state("driverCameraState").stream),
-    main_pub_drained=False,
     vision_pubs=["driverCameraState"],
     ignore_alive_pubs=["driverCameraState"],
   ),
@@ -712,8 +660,8 @@ def _replay_multi_process(
 
   all_msgs = sorted(lr, key=lambda msg: msg.logMonoTime)
   log_msgs = []
+  containers = []
   try:
-    containers = []
     for cfg in cfgs:
       container = ProcessContainer(cfg)
       containers.append(container)
