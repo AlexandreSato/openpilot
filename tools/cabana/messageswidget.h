@@ -60,12 +60,19 @@ public:
   bool show_inactive_messages = true;
 
 private:
+  struct DemuxColorState {
+    std::vector<uint8_t> last_data;
+    std::vector<QColor> colors;
+    double last_update_time = 0.0;
+  };
+
   void sortItems(std::vector<MessageListModel::Item> &items);
   bool match(const MessageListModel::Item &id);
   uint64_t makeDemuxKey(const Item &item) const {
     return (static_cast<uint64_t>(item.id.source) << 56) | (static_cast<uint64_t>(item.id.address) << 8) | static_cast<uint64_t>(std::max(item.cycle_base, 0));
   }
   const std::vector<uint8_t> &demuxBytes(const Item &item) const;
+  const std::vector<QColor> &demuxColors(const Item &item) const;
 
   QMap<int, QString> filters_;
   std::set<MessageId> dbc_messages_;
@@ -74,6 +81,8 @@ private:
   int sort_threshold_ = 0;
   int cycle_repetition = 1;
   mutable std::unordered_map<uint64_t, std::vector<uint8_t>> demux_bytes_cache_;
+  mutable std::unordered_map<uint64_t, std::vector<QColor>> demux_colors_cache_;
+  mutable std::unordered_map<uint64_t, DemuxColorState> demux_color_states_;
 };
 
 class MessageView : public QTreeView {

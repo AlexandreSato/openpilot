@@ -233,6 +233,64 @@ const std::vector<uint8_t> &MessageListModel::demuxBytes(const Item &item) const
   return empty_data;
 }
 
+const std::vector<QColor> &MessageListModel::demuxColors(const Item &item) const {
+  // Use the same color scheme as the original CanData::compute
+  static const QColor cyan(0, 187, 255, 128);         // start_alpha for increasing values
+  static const QColor red(255, 0, 0, 128);            // start_alpha for decreasing values
+  static const double fade_alpha_delta = 5.0;         // Simplified fade rate
+
+  uint64_t key = makeDemuxKey(item);
+  auto &color_state = demux_color_states_[key];
+
+  // Get the current demuxed bytes
+  const auto &current_bytes = demuxBytes(item);
+  if (current_bytes.empty()) {
+    static const std::vector<QColor> empty_colors;
+    return empty_colors;
+  }
+
+  // Initialize state if this is the first time we see this demux
+  if (color_state.last_data.empty()) {
+    color_state.last_data = current_bytes;
+    color_state.colors.assign(current_bytes.size(), QColor(0, 0, 0, 0));
+    color_state.last_update_time = can->currentSec();
+  }
+
+  // Get current time for fade calculations
+  double current_time = can->currentSec();
+  double time_delta = current_time - color_state.last_update_time;
+
+  // Resize colors vector if needed
+  if (color_state.colors.size() != current_bytes.size()) {
+    color_state.colors.resize(current_bytes.size(), QColor(0, 0, 0, 0));
+  }
+
+  // Compare current data with last known state and update colors
+  for (size_t i = 0; i < current_bytes.size(); ++i) {
+    if (i < color_state.last_data.size() && current_bytes[i] != color_state.last_data[i]) {
+      // Byte changed - set appropriate color
+      if (current_bytes[i] > color_state.last_data[i]) {
+        color_state.colors[i] = cyan;  // Increasing
+      } else {
+        color_state.colors[i] = red;   // Decreasing
+      }
+    } else {
+      // Byte unchanged - fade existing color
+      QColor &c = color_state.colors[i];
+      if (c.alpha() > 0) {
+        int new_alpha = std::max(0, c.alpha() - static_cast<int>(fade_alpha_delta * time_delta * 60)); // 60 fps assumed
+        c.setAlpha(new_alpha);
+      }
+    }
+  }
+
+  // Update state for next comparison
+  color_state.last_data = current_bytes;
+  color_state.last_update_time = current_time;
+
+  return color_state.colors;
+}
+
 QVariant MessageListModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid() || index.row() >= items_.size()) return {};
 
@@ -284,6 +342,9 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const {
       case Column::DATA: return item.id.source != INVALID_SOURCE ? "" : NA;
     }
   } else if (role == ColorsRole) {
+    if (getCycleRepetition() > 1 && item.cycle_base >= 0) {
+      return QVariant::fromValue((void*)(&demuxColors(item)));
+    }
     return QVariant::fromValue((void*)(&can->lastMessage(item.id).colors));
   } else if (role == BytesRole && index.column() == Column::DATA && item.id.source != INVALID_SOURCE) {
     return QVariant::fromValue((void*)(&demuxBytes(item)));
@@ -461,6 +522,8 @@ bool MessageListModel::filterAndSort() {
 void MessageListModel::msgsReceived(const std::set<MessageId> *new_msgs, bool has_new_ids) {
   // Clear demux cache when new messages arrive to ensure fresh data
   demux_bytes_cache_.clear();
+  demux_colors_cache_.clear();
+  // Note: We don't clear demux_color_states_ here as we want to preserve color state between updates
 
   if (has_new_ids || ((filters_.count(Column::FREQ) || filters_.count(Column::COUNT) || filters_.count(Column::DATA)) &&
                       ++sort_threshold_ == settings.fps)) {
