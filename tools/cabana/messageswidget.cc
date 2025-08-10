@@ -201,26 +201,36 @@ const std::vector<uint8_t> &MessageListModel::demuxBytes(const Item &item) const
   if (repetition <= 1 || item.cycle_base < 0) {
     return can->lastMessage(item.id).dat;
   }
-  uint64_t key = makeDemuxKey(item);
-  auto it = demux_bytes_cache_.find(key);
-  if (it != demux_bytes_cache_.end()) return it->second;
 
+  // For demux mode, check if the current lastMessage matches our cycle_base
+  const auto &lastMsg = can->lastMessage(item.id);
+  if (!lastMsg.dat.empty()) {
+    int current_cb = lastMsg.dat[0] % repetition;
+    if (current_cb == item.cycle_base) {
+      // Current message matches our cycle_base, return it directly
+      return lastMsg.dat;
+    }
+  }
+
+  // Search through recent events for matching cycle_base
   const auto &evs = can->events(item.id);
-  // Find latest event matching the cycle_base
   for (auto it_e = evs.rbegin(); it_e != evs.rend(); ++it_e) {
     const CanEvent *e = *it_e;
     if (e && e->size > 0) {
       int cb = e->dat[0] % repetition;
       if (cb == item.cycle_base) {
+        // Found matching event, cache it temporarily
+        uint64_t key = makeDemuxKey(item);
         auto &dst = demux_bytes_cache_[key];
         dst.assign(e->dat, e->dat + e->size);
-        return demux_bytes_cache_[key];
+        return dst;
       }
     }
   }
-  // Fallback to last bytes when none found for this base
-  demux_bytes_cache_[key] = can->lastMessage(item.id).dat;
-  return demux_bytes_cache_[key];
+
+  // No matching cycle_base found, return empty or last message as fallback
+  static const std::vector<uint8_t> empty_data;
+  return empty_data;
 }
 
 QVariant MessageListModel::data(const QModelIndex &index, int role) const {
@@ -413,7 +423,6 @@ bool MessageListModel::filterAndSort() {
   all_messages.insert(all_messages.end(), dbc_msgs.begin(), dbc_msgs.end());
 
   // filter and sort
-  demux_bytes_cache_.clear();
   std::vector<Item> items;
   items.reserve(all_messages.size());
   for (const auto &id : all_messages) {
@@ -450,6 +459,9 @@ bool MessageListModel::filterAndSort() {
 }
 
 void MessageListModel::msgsReceived(const std::set<MessageId> *new_msgs, bool has_new_ids) {
+  // Clear demux cache when new messages arrive to ensure fresh data
+  demux_bytes_cache_.clear();
+
   if (has_new_ids || ((filters_.count(Column::FREQ) || filters_.count(Column::COUNT) || filters_.count(Column::DATA)) &&
                       ++sort_threshold_ == settings.fps)) {
     sort_threshold_ = 0;
