@@ -4,6 +4,7 @@
 #include <optional>
 #include <set>
 #include <vector>
+#include <unordered_map>
 
 #include <QAbstractTableModel>
 #include <QHeaderView>
@@ -40,13 +41,19 @@ public:
   void msgsReceived(const std::set<MessageId> *new_msgs, bool has_new_ids);
   bool filterAndSort();
   void dbcModified();
+  void setCycleRepetition(int repetition) {
+    cycle_repetition = std::max(1, repetition);
+    filterAndSort();
+  }
+  int getCycleRepetition() const { return cycle_repetition; }
 
   struct Item {
     MessageId id;
     QString name;
     QString node;
+    int cycle_base = -1; // -1 when not demuxing
     bool operator==(const Item &other) const {
-      return id == other.id && name == other.name && node == other.node;
+      return id == other.id && name == other.name && node == other.node && cycle_base == other.cycle_base;
     }
   };
   std::vector<Item> items_;
@@ -55,12 +62,18 @@ public:
 private:
   void sortItems(std::vector<MessageListModel::Item> &items);
   bool match(const MessageListModel::Item &id);
+  uint64_t makeDemuxKey(const Item &item) const {
+    return (static_cast<uint64_t>(item.id.source) << 56) | (static_cast<uint64_t>(item.id.address) << 8) | static_cast<uint64_t>(std::max(item.cycle_base, 0));
+  }
+  const std::vector<uint8_t> &demuxBytes(const Item &item) const;
 
   QMap<int, QString> filters_;
   std::set<MessageId> dbc_messages_;
   int sort_column = 0;
   Qt::SortOrder sort_order = Qt::AscendingOrder;
   int sort_threshold_ = 0;
+  int cycle_repetition = 1;
+  mutable std::unordered_map<uint64_t, std::vector<uint8_t>> demux_bytes_cache_;
 };
 
 class MessageView : public QTreeView {
