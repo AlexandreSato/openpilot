@@ -32,7 +32,7 @@ BUTTON_TEXT_COLOR = {
   ButtonStyle.PRIMARY: rl.Color(228, 228, 228, 255),
   ButtonStyle.DANGER: rl.Color(228, 228, 228, 255),
   ButtonStyle.TRANSPARENT: rl.BLACK,
-  ButtonStyle.ACTION: rl.Color(0, 0, 0, 255),
+  ButtonStyle.ACTION: rl.BLACK,
   ButtonStyle.LIST_ACTION: rl.Color(228, 228, 228, 255),
   ButtonStyle.NO_EFFECT: rl.Color(228, 228, 228, 255),
   ButtonStyle.KEYBOARD: rl.Color(221, 221, 221, 255),
@@ -172,7 +172,6 @@ class Button(Widget):
                border_radius: int = 10,
                text_alignment: TextAlignment = TextAlignment.CENTER,
                text_padding: int = 20,
-               enabled: bool = True,
                icon = None,
                multi_touch: bool = False,
                ):
@@ -187,7 +186,6 @@ class Button(Widget):
 
     self._click_callback = click_callback
     self._multi_touch = multi_touch
-    self.enabled = enabled
 
   def set_text(self, text):
     self._label.set_text(text)

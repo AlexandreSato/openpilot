@@ -99,7 +99,7 @@ class WifiManagerUI(Widget):
           self.keyboard.reset()
           gui_app.set_modal_overlay(self.keyboard, lambda result: self._on_password_entered(network, result))
         case StateShowForgetConfirm(network):
-          self._confirm_dialog.text = f'Forget Wi-Fi Network "{network.ssid}"?'
+          self._confirm_dialog.set_text(f'Forget Wi-Fi Network "{network.ssid}"?')
           self._confirm_dialog.reset()
           gui_app.set_modal_overlay(self._confirm_dialog, callback=lambda result: self.on_forgot_confirm_finished(network, result))
         case _:
@@ -150,14 +150,14 @@ class WifiManagerUI(Widget):
     match self.state:
       case StateConnecting(network=connecting):
         if connecting.ssid == network.ssid:
-          self._networks_buttons[network.ssid].enabled = False
+          self._networks_buttons[network.ssid].set_enabled(False)
           status_text = "CONNECTING..."
       case StateForgetting(network=forgetting):
         if forgetting.ssid == network.ssid:
-          self._networks_buttons[network.ssid].enabled = False
+          self._networks_buttons[network.ssid].set_enabled(False)
           status_text = "FORGETTING..."
       case _:
-        self._networks_buttons[network.ssid].enabled = True
+        self._networks_buttons[network.ssid].set_enabled(True)
 
     self._networks_buttons[network.ssid].render(ssid_rect)
 
@@ -187,8 +187,7 @@ class WifiManagerUI(Widget):
 
   def _forget_networks_buttons_callback(self, network):
     if self.scroll_panel.is_touch_valid():
-      if isinstance(self.state, StateIdle):
-        self.state = StateShowForgetConfirm(network)
+      self.state = StateShowForgetConfirm(network)
 
   def _draw_status_icon(self, rect, network: NetworkInfo):
     """Draw the status icon based on network's connection state"""
