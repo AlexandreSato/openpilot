@@ -13,15 +13,31 @@ void Sparkline::update(const cabana::Signal *sig, CanEventIter first, CanEventIt
   points_.clear();
   min_val = std::numeric_limits<double>::max();
   max_val = std::numeric_limits<double>::lowest();
-  points_.reserve(std::distance(first, last));
+  // downsample: cap points for sparkline rendering
+  const size_t total = std::distance(first, last);
+  const size_t kMaxPoints = 400; // minimal intrusive downsampling
+  points_.reserve(std::min(total, kMaxPoints));
 
   uint64_t start_time = (*first)->mono_time;
   double value = 0.0;
-  for (auto it = first; it != last; ++it) {
-    if (sig->getValue((*it)->dat, (*it)->size, &value)) {
-      min_val = std::min(min_val, value);
-      max_val = std::max(max_val, value);
-      points_.emplace_back(((*it)->mono_time - start_time) / 1e9, value);
+  if (total <= kMaxPoints) {
+    for (auto it = first; it != last; ++it) {
+      if (sig->getValue((*it)->dat, (*it)->size, &value)) {
+        min_val = std::min(min_val, value);
+        max_val = std::max(max_val, value);
+        points_.emplace_back(((*it)->mono_time - start_time) / 1e9, value);
+      }
+    }
+  } else {
+    const double step = static_cast<double>(total) / static_cast<double>(kMaxPoints);
+    for (size_t i = 0; i < kMaxPoints; ++i) {
+      auto it = first + static_cast<size_t>(i * step);
+      if (it >= last) break;
+      if (sig->getValue((*it)->dat, (*it)->size, &value)) {
+        min_val = std::min(min_val, value);
+        max_val = std::max(max_val, value);
+        points_.emplace_back(((*it)->mono_time - start_time) / 1e9, value);
+      }
     }
   }
 
@@ -30,7 +46,9 @@ void Sparkline::update(const cabana::Signal *sig, CanEventIter first, CanEventIt
     return;
   }
 
-  freq_ = points_.size() / std::max(points_.back().x() - points_.front().x(), 1.0);
+  // Preserve true Hz even when downsampled: use total events over time span
+  double span = std::max(points_.back().x() - points_.front().x(), 1.0);
+  freq_ = (double)total / span;
   render(sig->color, range, size);
 }
 

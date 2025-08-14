@@ -202,24 +202,38 @@ const std::vector<uint8_t> &MessageListModel::demuxBytes(const Item &item) const
     return can->lastMessage(item.id).dat;
   }
 
-  // For demux mode, check if the current lastMessage matches our cycle_base
+  // Demux needs 8-way (or N-way) contiguous sequence alignment.
+  // Anchor to the current block base, then pick desired_cycle = base + cycle_base.
   const auto &lastMsg = can->lastMessage(item.id);
-  if (!lastMsg.dat.empty()) {
-    int current_cb = lastMsg.dat[0] % repetition;
-    if (current_cb == item.cycle_base) {
-      // Current message matches our cycle_base, return it directly
-      return lastMsg.dat;
-    }
+  if (lastMsg.dat.empty()) {
+    static const std::vector<uint8_t> empty_data;
+    return empty_data;
+  }
+  const int last_cycle = lastMsg.dat[0];
+  const int block_base = last_cycle - (last_cycle % repetition);
+  const int desired_cycle = block_base + item.cycle_base;
+
+  if (lastMsg.dat[0] == desired_cycle) {
+    return lastMsg.dat;
   }
 
-  // Search through recent events for matching cycle_base
   const auto &evs = can->events(item.id);
+  // search current block
   for (auto it_e = evs.rbegin(); it_e != evs.rend(); ++it_e) {
     const CanEvent *e = *it_e;
-    if (e && e->size > 0) {
-      int cb = e->dat[0] % repetition;
-      if (cb == item.cycle_base) {
-        // Found matching event, cache it temporarily
+    if (e && e->size > 0 && e->dat[0] == desired_cycle) {
+      uint64_t key = makeDemuxKey(item);
+      auto &dst = demux_bytes_cache_[key];
+      dst.assign(e->dat, e->dat + e->size);
+      return dst;
+    }
+  }
+  // fallback: search a few previous blocks with step = repetition
+  for (int step = 1; step <= 4; ++step) {
+    int older_cycle = desired_cycle - step * repetition;
+    for (auto it_e = evs.rbegin(); it_e != evs.rend(); ++it_e) {
+      const CanEvent *e = *it_e;
+      if (e && e->size > 0 && e->dat[0] == older_cycle) {
         uint64_t key = makeDemuxKey(item);
         auto &dst = demux_bytes_cache_[key];
         dst.assign(e->dat, e->dat + e->size);
@@ -227,8 +241,6 @@ const std::vector<uint8_t> &MessageListModel::demuxBytes(const Item &item) const
       }
     }
   }
-
-  // No matching cycle_base found, return empty or last message as fallback
   static const std::vector<uint8_t> empty_data;
   return empty_data;
 }
