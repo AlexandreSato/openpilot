@@ -324,28 +324,84 @@ static uint32_t calculate_flexray_payload_crc(const flexray_frame_t &frame) {
 
 bool Panda::unpack_flexray_buffer(uint8_t *data, uint32_t &size, std::vector<can_frame> &out_vec) {
   int pos = 0;
-  while (pos <= (int)size - (int)sizeof(flexray_frame_t)) {
-    flexray_frame_t *frame = (flexray_frame_t *)&data[pos];
+  // New variable-length format per USB stream:
+  // [len_lo][len_hi] | [source:1] [header:5] [payload:N] [crc24_be:3]
+  // where len = 1 + 5 + N + 3, and N == payload_length_words * 2
+  while (pos + 2 <= (int)size) {
+    uint16_t body_len = (uint16_t)(data[pos] | (data[pos + 1] << 8));
+    uint32_t record_len = (uint32_t)body_len + 2U; // include length field itself
 
-    bool potential_frame = (frame->frame_id <= 0x7FF && frame->payload_length_words <= 127);
-    if (potential_frame &&
-      calculate_flexray_header_crc(*frame) == frame->header_crc &&
-      calculate_flexray_payload_crc(*frame) == frame->payload_crc) {
-      can_frame &canData = out_vec.emplace_back();
-      canData.address = frame->frame_id;
-      canData.src = frame->source;
-      size_t payload_len = std::min((size_t)frame->payload_length_words * 2, sizeof(frame->payload));
-      canData.dat.assign(1, frame->cycle_count);
-      canData.dat.append(frame->payload, payload_len);
-      pos += sizeof(flexray_frame_t);
-    } else {
-      pos++;
+    // Basic sanity on body_len
+    if (body_len < (uint16_t)(1 + 5 + 3) || body_len > (uint16_t)(1 + 5 + MAX_FRAME_PAYLOAD_BYTES + 3)) {
+      // Invalid length, attempt resync by skipping one byte
+      pos += 1;
+      continue;
     }
+
+    if (pos + (int)record_len > (int)size) {
+      // Partial record; wait for more data
+      break;
+    }
+
+    const uint8_t *rec = &data[pos + 2];
+    uint8_t source = rec[0];
+    const uint8_t *hdr = &rec[1]; // 5 bytes
+    // Extract header fields
+    uint8_t byte0 = hdr[0];
+    uint8_t byte1 = hdr[1];
+    uint8_t byte2 = hdr[2];
+    uint8_t byte3 = hdr[3];
+    uint8_t byte4 = hdr[4];
+
+    flexray_frame_t frame = {};
+    frame.source = source;
+    frame.indicators = (uint8_t)(byte0 >> 3);
+    frame.frame_id = (uint16_t)(((byte0 & 0x07) << 8) | byte1);
+    frame.payload_length_words = (uint8_t)(byte2 >> 1);
+    frame.header_crc = (uint16_t)(((uint16_t)(byte2 & 0x01) << 10) | ((uint16_t)byte3 << 2) | ((byte4 >> 6) & 0x03));
+    frame.cycle_count = (uint8_t)(byte4 & 0x3F);
+
+    uint16_t expected_payload_bytes = (uint16_t)frame.payload_length_words * 2U;
+    // Compute actual payload bytes from body length
+    uint16_t actual_payload_bytes = (uint16_t)(body_len - (uint16_t)(1 + 5 + 3));
+
+    bool length_ok = (actual_payload_bytes == expected_payload_bytes) && (expected_payload_bytes <= MAX_FRAME_PAYLOAD_BYTES);
+
+    const uint8_t *payload_ptr = &rec[1 + 5];
+    const uint8_t *crc_ptr = &payload_ptr[actual_payload_bytes];
+    uint32_t crc_stream = ((uint32_t)crc_ptr[0] << 16) | ((uint32_t)crc_ptr[1] << 8) | (uint32_t)crc_ptr[2];
+
+    if (!length_ok) {
+      // Skip malformed record
+      pos += 1;
+      continue;
+    }
+
+    if (expected_payload_bytes > 0) {
+      memcpy(frame.payload, payload_ptr, expected_payload_bytes);
+    }
+
+    // Validate header CRC and payload CRC
+    bool header_crc_ok = (calculate_flexray_header_crc(frame) == frame.header_crc);
+    uint32_t payload_crc = calculate_flexray_payload_crc(frame) & 0xFFFFFFu;
+    bool payload_crc_ok = (payload_crc == crc_stream);
+
+    if (header_crc_ok && payload_crc_ok) {
+      can_frame &canData = out_vec.emplace_back();
+      canData.address = frame.frame_id;
+      canData.src = frame.source;
+      size_t payload_len = std::min((size_t)expected_payload_bytes, sizeof(frame.payload));
+      canData.dat.assign(1, frame.cycle_count);
+      canData.dat.append(frame.payload, payload_len);
+    }
+
+    // advance to next record
+    pos += record_len;
   }
 
-  // FlexRay is high-speed, so we process the whole buffer at once and discard any remaining partial data.
-  // This prevents buffer overflow from incomplete frames.
-  size = 0;
+  // move remaining bytes (partial record) to start of buffer for next read
+  memmove(data, &data[pos], size - pos);
+  size -= pos;
 
   return true;
 }
