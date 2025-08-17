@@ -88,7 +88,7 @@ QWidget *MessagesWidget::createToolBar() {
   // Demux dropdown
   layout->addWidget(new QLabel(tr("Demux:"), this));
   auto demux_combo = new QComboBox(this);
-  demux_combo->addItems({"1", "2", "4", "8"});
+  demux_combo->addItems({"1", "2", "4", "8", "16", "32"});
   demux_combo->setCurrentText("1");
   layout->addWidget(demux_combo);
   QCheckBox *suppress_defined_signals = new QCheckBox(tr("Suppress Signals"), this);
@@ -218,21 +218,30 @@ const std::vector<uint8_t> &MessageListModel::demuxBytes(const Item &item) const
   }
 
   const auto &evs = can->events(item.id);
-  // search current block
-  for (auto it_e = evs.rbegin(); it_e != evs.rend(); ++it_e) {
-    const CanEvent *e = *it_e;
-    if (e && e->size > 0 && e->dat[0] == desired_cycle) {
+  // only consider events up to current playback time to avoid future data
+  const uint64_t current_mono = can->toMonoTime(can->currentSec());
+  auto it_current = std::upper_bound(evs.begin(), evs.end(), current_mono, CompareCanEvent());
+
+  // search within the current demux block
+  for (auto rit = std::make_reverse_iterator(it_current); rit != evs.rend(); ++rit) {
+    const CanEvent *e = *rit;
+    if (!e || e->size == 0) continue;
+    const int cyc = e->dat[0];
+    const int cyc_base = cyc - (cyc % repetition);
+    if (cyc_base < block_base) break;  // left this block
+    if (cyc == desired_cycle) {
       uint64_t key = makeDemuxKey(item);
       auto &dst = demux_bytes_cache_[key];
       dst.assign(e->dat, e->dat + e->size);
       return dst;
     }
   }
-  // fallback: search a few previous blocks with step = repetition
+
+  // fallback: search a few previous blocks (never into the future)
   for (int step = 1; step <= 4; ++step) {
     int older_cycle = desired_cycle - step * repetition;
-    for (auto it_e = evs.rbegin(); it_e != evs.rend(); ++it_e) {
-      const CanEvent *e = *it_e;
+    for (auto rit = std::make_reverse_iterator(it_current); rit != evs.rend(); ++rit) {
+      const CanEvent *e = *rit;
       if (e && e->size > 0 && e->dat[0] == older_cycle) {
         uint64_t key = makeDemuxKey(item);
         auto &dst = demux_bytes_cache_[key];
