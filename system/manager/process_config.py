@@ -113,7 +113,7 @@ procs = [
   PythonProcess("updated", "system.updated.updated", only_offroad, enabled=not PC),
   PythonProcess("uploader", "system.loggerd.uploader", always_run),
   PythonProcess("statsd", "system.statsd", always_run),
-#  PythonProcess("feedbackd", "selfdrive.ui.feedback.feedbackd", only_onroad),
+  PythonProcess("feedbackd", "selfdrive.ui.feedback.feedbackd", only_onroad),
 
   # AleSato procs
   NativeProcess("remotedoorsd", "system/webserver", ["./remotedoorsd.py"], not_first_boot, enabled=not_first_boot),
