@@ -9,6 +9,7 @@ from openpilot.tools.lib.logreader import LogReader
 from datetime import datetime
 
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="Corrupted events detected")
+unique_routes = []
 
 def segment_to_segment_name(data_dir, segment):
     fake_dongle = "ffffffffffffffff"
@@ -43,7 +44,7 @@ def all_routes():
     segment_names = all_segment_names()
     route_names = [segment_name.route_name for segment_name in segment_names]
     route_times = [route_name.time_str for route_name in route_names]
-    unique_routes = list(dict.fromkeys(route_times))
+    unique_routes = dict.fromkeys(route_times)
     date_time = []
     for unique_route in unique_routes:
         wall_time_rlog = None
@@ -61,11 +62,11 @@ def all_routes():
                 if rlog.which() == "gpsLocationExternal"),
             None
         )
-        date_time.append(datetime.fromtimestamp(wall_time_rlog / 1e3))
+        date_time.append(datetime.fromtimestamp(wall_time_rlog / 1e3).strftime("%Y-%m-%d  %H:%M"))
     # userbookmark_segments_list = [get_userbookmark_segments(r) for r in unique_routes]
     # return unique_routes, date_time, userbookmark_segments_list
     return unique_routes, date_time
 
 a, b = all_routes()
-for _, __ in zip(a, b, strict=True):
-    print(f'a: {_}     b: {__}')
+for i, (_, __) in enumerate(zip(a, b, strict=True)):
+    print(f'i: {i+1:03d}  a: {_}        b: {__}')
