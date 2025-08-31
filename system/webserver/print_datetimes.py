@@ -50,7 +50,11 @@ def all_routes():
         try:
             rlogs = LogReader(os.path.join(Paths.log_root(), unique_route + "--1/rlog.zst"))
         except AssertionError:
-            rlogs = LogReader(os.path.join(Paths.log_root(), unique_route + "--0/rlog.zst"))
+            try:
+                rlogs = LogReader(os.path.join(Paths.log_root(), unique_route + "--0/rlog.zst"))
+            except AssertionError:
+                print(f'Route {unique_route} in process of deleting')
+                pass
         wall_time_rlog = next(
             (rlog.gpsLocationExternal.unixTimestampMillis
                 for rlog in rlogs
