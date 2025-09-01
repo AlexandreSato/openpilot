@@ -48,6 +48,7 @@ def all_routes():
   for unique_route in unique_routes:
     wall_time_rlog = None
     should_minus_one_minute = False
+    rlogs = None
     try:
       rlogs = LogReader(os.path.join(Paths.log_root(), unique_route + "--1/rlog.zst"))
       should_minus_one_minute = True
@@ -56,12 +57,13 @@ def all_routes():
         rlogs = LogReader(os.path.join(Paths.log_root(), unique_route + "--0/rlog.zst"))
       except AssertionError:
         print(f'Route {unique_route} in process of deleting')
-    wall_time_rlog = next(
-      (rlog.gpsLocationExternal.unixTimestampMillis
-        for rlog in rlogs
-        if rlog.which() == "gpsLocationExternal"),
-      None
-    )
+    if rlogs is not None:
+      wall_time_rlog = next(
+        (rlog.gpsLocationExternal.unixTimestampMillis
+          for rlog in rlogs
+          if rlog.which() == "gpsLocationExternal"),
+        None
+      )
     temp_date_time = datetime.fromtimestamp(wall_time_rlog / 1e3)
     temp_date_time = temp_date_time - timedelta(minutes=1) if should_minus_one_minute else temp_date_time
     date_time.append(temp_date_time.strftime("%Y-%m-%d  %H:%M"))
