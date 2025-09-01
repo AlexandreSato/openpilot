@@ -4,7 +4,9 @@ from openpilot.system.hardware.hw import Paths
 from openpilot.system.loggerd.uploader import listdir_by_creation
 from openpilot.tools.lib.route import SegmentName
 from openpilot.tools.lib.logreader import LogReader
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+BRT = timezone(timedelta(hours=-3))
 
 def segment_to_segment_name(data_dir, segment):
   fake_dongle = "ffffffffffffffff"
@@ -64,7 +66,8 @@ def all_routes():
           if rlog.which() == "gpsLocationExternal"),
         1
       )
-    temp_date_time = datetime.fromtimestamp(wall_time_rlog / 1e3)
+    temp_date_time = datetime.fromtimestamp(wall_time_rlog / 1e3, tz=timezone.utc)
+    temp_date_time = temp_date_time.astimezone(BRT)
     temp_date_time = temp_date_time - timedelta(minutes=1) if should_minus_one_minute else temp_date_time
     date_time.append(temp_date_time.strftime("%Y-%m-%d  %H:%M"))
     should_minus_one_minute = False
