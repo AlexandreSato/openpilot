@@ -46,7 +46,7 @@ def all_routes():
   unique_routes = list(dict.fromkeys(route_times))
   date_time = []
   for unique_route in unique_routes:
-    wall_time_rlog = None
+    wall_time_rlog = 1
     should_minus_one_minute = False
     rlogs = None
     try:
@@ -62,7 +62,7 @@ def all_routes():
         (rlog.gpsLocationExternal.unixTimestampMillis
           for rlog in rlogs
           if rlog.which() == "gpsLocationExternal"),
-        None
+        1
       )
     temp_date_time = datetime.fromtimestamp(wall_time_rlog / 1e3)
     temp_date_time = temp_date_time - timedelta(minutes=1) if should_minus_one_minute else temp_date_time
