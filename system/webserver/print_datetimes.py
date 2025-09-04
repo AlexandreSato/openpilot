@@ -33,7 +33,7 @@ def get_userbookmark_segments(unique_route):
       rlogs = LogReader(segment_path)
       if any(msg.which() == "userBookmark" for msg in rlogs):
         segments_with_bookmark.append(i)
-        print(f'bookMark found in: {segment_path} and segment: {i}', flush=True)
+        print(f'\nbookMark found in: {segment_path} and segment: {i}', flush=True)
         end = datetime.now()
         print(f'Executed in: {end - begin}\n', flush=True)
     except AssertionError:

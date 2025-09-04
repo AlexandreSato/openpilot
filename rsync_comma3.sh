@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 BASE_DIR="/home/sato/.comma/media/0"
 C3_IP="192.168.15.7"
