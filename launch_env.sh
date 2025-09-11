@@ -10,4 +10,5 @@ if [ -z "$AGNOS_VERSION" ]; then
   export AGNOS_VERSION="13.1"
 fi
 
+export FINGERPRINT=HONDA_CITY_7G
 export STAGING_ROOT="/data/safe_staging"
