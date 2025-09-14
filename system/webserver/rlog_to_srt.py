@@ -5,6 +5,8 @@ import bisect
 import subprocess
 from openpilot.tools.lib.logreader import LogReader
 
+BRT = datetime.timezone(datetime.timedelta(hours=-3))
+
 def to_srt_time(seconds: float) -> str:
     """Converte segundos float -> formato SRT hh:mm:ss,ms"""
     td = datetime.timedelta(seconds=seconds)
@@ -89,7 +91,8 @@ def main(rlog_path, video_path, srt_path):
                 else:
                     lat, lon, uts = gps_data[k-1]
             # converter timestamp Unix (ms) -> datetime UTC
-            dt = datetime.datetime.utcfromtimestamp(uts / 1000.0)
+            dt = datetime.datetime.fromtimestamp(uts / 1e3, tz=datetime.timezone.utc)
+            dt = dt.astimezone(BRT)
             dt_str = dt.strftime("%Y-%m-%d %H:%M:%S")
         else:
             lat, lon, dt_str = None, None, ""
