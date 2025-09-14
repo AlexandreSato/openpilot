@@ -295,7 +295,40 @@ void BinaryViewModel::updateItem(int row, int col, uint8_t val, const QColor &co
 
 void BinaryViewModel::updateState() {
   const auto &last_msg = can->lastMessage(msg_id);
-  const auto &binary = last_msg.dat;
+  // Demux filter for Bit View only
+  std::vector<uint8_t> demuxed;
+  const std::vector<uint8_t> *binary_ptr = &last_msg.dat;
+  if (demux_cycle_base >= 0 && demux_repetition > 1 && !last_msg.dat.empty()) {
+    const int last_cycle = last_msg.dat[0];
+    const int block_base = last_cycle - (last_cycle % demux_repetition);
+    const int desired_cycle = block_base + demux_cycle_base;
+    if (last_msg.dat[0] == desired_cycle) {
+      binary_ptr = &last_msg.dat;
+    } else {
+      const auto &evs = can->events(msg_id);
+      const uint64_t current_mono = can->toMonoTime(can->currentSec());
+      auto it_current = std::upper_bound(evs.begin(), evs.end(), current_mono, CompareCanEvent());
+      bool found = false;
+      for (auto rit = std::make_reverse_iterator(it_current); rit != evs.rend(); ++rit) {
+        const CanEvent *e = *rit;
+        if (!e || e->size == 0) continue;
+        const int cyc = e->dat[0];
+        const int cyc_base = cyc - (cyc % demux_repetition);
+        if (cyc_base < block_base) break;
+        if (cyc == desired_cycle) { demuxed.assign(e->dat, e->dat + e->size); binary_ptr = &demuxed; found = true; break; }
+      }
+      if (!found) {
+        for (int step = 1; step <= 4 && !found; ++step) {
+          int older_cycle = desired_cycle - step * demux_repetition;
+          for (auto rit = std::make_reverse_iterator(it_current); rit != evs.rend(); ++rit) {
+            const CanEvent *e = *rit;
+            if (e && e->size > 0 && e->dat[0] == older_cycle) { demuxed.assign(e->dat, e->dat + e->size); binary_ptr = &demuxed; found = true; break; }
+          }
+        }
+      }
+    }
+  }
+  const auto &binary = *binary_ptr;
   // Handle size changes in binary data
   if (binary.size() > row_count) {
     beginInsertRows({}, row_count, binary.size() - 1);
@@ -336,7 +369,8 @@ void BinaryViewModel::updateState() {
       color.setAlpha(alpha);
       updateItem(i, j, bit_val, color);
     }
-    updateItem(i, 8, binary[i], last_msg.colors[i]);
+    const QColor &col = (i < last_msg.colors.size()) ? last_msg.colors[i] : QColor(0, 0, 0, 0);
+    updateItem(i, 8, binary[i], col);
   }
 }
 

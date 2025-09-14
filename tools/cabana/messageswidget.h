@@ -120,6 +120,7 @@ public:
   QByteArray saveHeaderState() const { return view->header()->saveState(); }
   bool restoreHeaderState(const QByteArray &state) const { return view->header()->restoreState(state); }
   void suppressHighlighted();
+  int currentCycleRepetition() const { return model ? model->getCycleRepetition() : 1; }
 
 signals:
   void msgSelectionChanged(const MessageId &message_id);

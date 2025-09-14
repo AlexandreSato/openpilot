@@ -40,6 +40,7 @@ public slots:
   void saveToClipboard();
 
 signals:
+  void syncBitDemux(int repetition, int idx, bool enabled);
   void showMessage(const QString &msg, int timeout);
   void updateProgressBar(uint64_t cur, uint64_t total, bool success);
 

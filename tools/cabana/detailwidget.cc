@@ -4,6 +4,9 @@
 #include <QMenu>
 #include <QRadioButton>
 #include <QToolBar>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QSpinBox>
 
 #include "tools/cabana/commands.h"
 #include "tools/cabana/mainwin.h"
@@ -65,6 +68,12 @@ DetailWidget::DetailWidget(ChartsWidget *charts, QWidget *parent) : charts(chart
   });
   QObject::connect(tabbar, &QTabBar::tabCloseRequested, tabbar, &QTabBar::removeTab);
   QObject::connect(charts, &ChartsWidget::seriesChanged, signal_view, &SignalView::updateChartState);
+  // Listen to MainWindow's syncBitDemux to auto-follow Message View selection
+  if (auto mw = parentWidget()->parentWidget()->findChild<MainWindow *>()) {
+    QObject::connect(mw, &MainWindow::syncBitDemux, this, [this](int repetition, int idx, bool enabled){
+      binary_view->setDemuxParams(repetition, idx, enabled);
+    });
+  }
 }
 
 void DetailWidget::createToolBar() {
@@ -87,6 +96,21 @@ void DetailWidget::createToolBar() {
   toolbar->addWidget(heatmap_live);
   toolbar->addWidget(heatmap_all);
 
+  // Bit-view demux filter (minimal UI): Enable, repetition, cycle_base
+  toolbar->addSeparator();
+  auto *demux_enable = new QCheckBox(tr("Bit Demux"), this);
+  auto *demux_rep = new QComboBox(this);
+  demux_rep->addItems({"1","2","4","8","16","32"});
+  demux_rep->setCurrentText("1");
+  auto *demux_cycle = new QSpinBox(this);
+  demux_cycle->setRange(0, 31);
+  demux_cycle->setValue(0);
+  toolbar->addWidget(demux_enable);
+  toolbar->addWidget(new QLabel(tr("N:"), this));
+  toolbar->addWidget(demux_rep);
+  toolbar->addWidget(new QLabel(tr("Idx:"), this));
+  toolbar->addWidget(demux_cycle);
+
   // Edit and remove buttons
   toolbar->addSeparator();
   toolbar->addAction(utils::icon("pencil"), tr("Edit Message"), this, &DetailWidget::editMsg);
@@ -100,6 +124,16 @@ void DetailWidget::createToolBar() {
     heatmap_all->setText(text);
     (range ? heatmap_all : heatmap_live)->setChecked(true);
   });
+
+  auto apply_demux = [this, demux_enable, demux_rep, demux_cycle]() {
+    int rep = demux_rep->currentText().toInt();
+    int idx = demux_cycle->value();
+    demux_cycle->setMaximum(std::max(0, rep - 1));
+    binary_view->setDemuxParams(rep, idx, demux_enable->isChecked());
+  };
+  connect(demux_enable, &QCheckBox::toggled, this, [apply_demux](bool){ apply_demux(); });
+  connect(demux_rep, &QComboBox::currentTextChanged, this, [apply_demux](const QString&){ apply_demux(); });
+  connect(demux_cycle, qOverload<int>(&QSpinBox::valueChanged), this, [apply_demux](int){ apply_demux(); });
 }
 
 void DetailWidget::showTabBarContextMenu(const QPoint &pt) {
