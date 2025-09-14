@@ -25,7 +25,7 @@
 
 #define PANDA_BUS_OFFSET 4
 
-#define MAX_FRAME_PAYLOAD_BYTES 64
+#define MAX_FRAME_PAYLOAD_BYTES 254
 
 struct __attribute__((packed)) can_header {
   uint8_t reserved : 1;
@@ -103,7 +103,7 @@ public:
 
 protected:
   // for unit tests
-  uint8_t receive_buffer[RECV_SIZE + sizeof(can_header) + 64];
+  uint8_t receive_buffer[RECV_SIZE + sizeof(can_header) + MAX_FRAME_PAYLOAD_BYTES];
   uint32_t receive_buffer_size = 0;
 
   Panda(uint32_t bus_offset) : bus_offset(bus_offset) {}
