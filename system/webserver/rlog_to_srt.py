@@ -16,7 +16,22 @@ def to_srt_time(seconds: float) -> str:
     return f"{h:02}:{m:02}:{s:02},{ms:03}"
 
 def get_fps_and_duration(video_path: str):
-    """Usa ffprobe para pegar FPS e duração do vídeo"""
+    if video_path.endswith(".hevc"):
+        fps = 20.0   # câmeras do comma: ~20 fps
+        # descobre duração decodificando frames
+        nframes_str = subprocess.check_output([
+            "ffprobe", "-v", "0",
+            "-count_frames",
+            "-select_streams", "v:0",
+            "-show_entries", "stream=nb_read_frames",
+            "-of", "csv=p=0",
+            video_path
+        ]).decode().strip()
+        nframes = int(nframes_str)
+        duration = nframes / fps
+        return fps, duration
+
+    # fallback para arquivos com metadados normais (.ts, .mp4)
     fps_str = subprocess.check_output([
         "ffprobe", "-v", "0", "-select_streams", "v:0",
         "-show_entries", "stream=r_frame_rate",
@@ -32,7 +47,6 @@ def get_fps_and_duration(video_path: str):
         "-of", "csv=p=0", video_path
     ]).decode().strip()
     duration = float(duration_str)
-
     return fps, duration
 
 def main(rlog_path, video_path, srt_path):
@@ -118,7 +132,9 @@ def main(rlog_path, video_path, srt_path):
         f.write("\n".join(srt_lines))
 
     print(f"[OK] Legenda gerada: {srt_path}")
-    print("Exmplo de comando para adicionar a legenda:\nffmpeg -i qcamera.ts -vf subtitles=vego.srt -c:a copy out.mp4")
+    print("\nExemplo de comando para adicionar a legenda:\nffmpeg -i qcamera.ts -vf subtitles=vego.srt -c:a copy out.mp4\n")
+    print("Exemplo de comando para adicionar áudio no fcamera.hevc:")
+    print("ffmpeg -i fcamera.mp4 -i qcamera.ts -map 0:v:0 -map 1:a:0 -c:v libx264 -crf 28 -preset veryfast -c:a aac -b:a 96k final_comprimido.mp4\n")
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
