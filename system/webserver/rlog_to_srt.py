@@ -107,7 +107,8 @@ def main(rlog_path, video_path, srt_path):
             # converter timestamp Unix (ms) -> datetime UTC
             dt = datetime.datetime.fromtimestamp(uts / 1e3, tz=datetime.timezone.utc)
             dt = dt.astimezone(BRT)
-            dt_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+            # dt_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+            dt_str = dt.strftime("%d/%m/%Y %H:%M:%S") # formato brasileiro
         else:
             lat, lon, dt_str = None, None, ""
 

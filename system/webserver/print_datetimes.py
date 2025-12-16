@@ -76,8 +76,9 @@ def all_routes():
 if __name__ == "__main__":
   begin = datetime.now()
   unique_routes, b = all_routes()
-  for i, (_, __) in enumerate(zip(unique_routes, b, strict=True)):
-    print(f'i:{i+1:03d}  {_}  {__}', flush=True)
+  sorted_unique_routes = sorted(zip(unique_routes, b, strict=True), key=lambda x: x[1])
+  for i, (route, dt) in enumerate(sorted_unique_routes):
+    print(f'i:{i+1:03d}  {route}  {dt}', flush=True)
   end = datetime.now()
   print(f'Executed in: {end - begin} \n', flush=True)
 
