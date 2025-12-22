@@ -38,7 +38,8 @@ def flash_panda(panda_serial: str) -> Panda:
 
   if panda.bootstub or panda_signature != fw_signature:
     cloudlog.info("Panda firmware out of date, update required")
-    panda.flash()
+    if not panda_serial.startswith("picoflex"):
+      panda.flash()
     cloudlog.info("Done flashing")
 
   if panda.bootstub:
@@ -54,7 +55,7 @@ def flash_panda(panda_serial: str) -> Panda:
     raise AssertionError
 
   panda_signature = panda.get_signature()
-  if panda_signature != fw_signature:
+  if panda_signature != fw_signature and not panda_serial.startswith("picoflex"):
     cloudlog.info("Version mismatch after flashing, exiting")
     raise AssertionError
 
