@@ -149,7 +149,7 @@ def main() -> None:
           params.put_bool("PandaSomResetTriggered", True)
           cloudlog.event("panda.som_reset_triggered", health=health, serial=panda.get_usb_serial())
 
-        if first_run:
+        if first_run and not panda.get_usb_serial().startswith("picoflex"):
           # reset panda to ensure we're in a good state
           cloudlog.info(f"Resetting panda {panda.get_usb_serial()}")
           panda.reset(reconnect=True)
