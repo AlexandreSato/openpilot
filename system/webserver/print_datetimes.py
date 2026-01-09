@@ -27,7 +27,7 @@ def get_userbookmark_segments(unique_route):
   while True:
     segment_path = os.path.join(Paths.log_root(), f"{unique_route}--{i}/rlog.zst")
     if not os.path.exists(segment_path):
-      print(f'stopped in {segment_path} and segment {i}', flush=True)
+      # print(f'stopped in {segment_path} and segment {i}', flush=True) # Debug
       break
     try:
       rlogs = LogReader(segment_path)
@@ -58,7 +58,8 @@ def all_routes():
       try:
         rlogs = LogReader(os.path.join(Paths.log_root(), unique_route + "--0/rlog.zst"))
       except AssertionError:
-        print(f'Route {unique_route} in process of deleting')
+        # print(f'Route {unique_route} in process of deleting') # Debug
+        pass
     if rlogs is not None:
       wall_time_rlog = next(
         (rlog.gpsLocationExternal.unixTimestampMillis
@@ -75,14 +76,17 @@ def all_routes():
 
 if __name__ == "__main__":
   begin = datetime.now()
-  unique_routes, b = all_routes()
-  sorted_unique_routes = sorted(zip(unique_routes, b, strict=True), key=lambda x: x[1])
+
+  unique_routes, dt = all_routes()
+  sorted_unique_routes = sorted(zip(unique_routes, dt, strict=True), key=lambda x: x[1])
   for i, (route, dt) in enumerate(sorted_unique_routes):
     print(f'i:{i+1:03d}  {route}  {dt}', flush=True)
-  end = datetime.now()
-  print(f'Executed in: {end - begin} \n', flush=True)
+  print(f'Executed in: {datetime.now() - begin} \n', flush=True)
+
 
   begin = datetime.now()
-  userbookmark_segments_list = [get_userbookmark_segments(r) for r in sorted(unique_routes, reverse=True)]
-  end = datetime.now()
-  print(f'Executed in: {end - begin}')
+
+  userbookmark_segments_list = [
+      get_userbookmark_segments(route) for route, dt in reversed(sorted_unique_routes)
+    ]
+  print(f'Executed in: {datetime.now() - begin}')
