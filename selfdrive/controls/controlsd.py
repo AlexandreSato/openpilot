@@ -109,7 +109,7 @@ class Controls:
       self.alka_active = lkas_on and gear_ok and calibrated and not CS.seatbeltUnlatched and not CS.doorOpen
     CC.latActive = (self.sm['selfdriveState'].active or self.alka_active) and not CS.steerFaultTemporary and not CS.steerFaultPermanent and \
                    (not standstill or self.CP.steerAtStandstill) and CS.vEgo > 5 * CV.KPH_TO_MS and not CS.brakePressed and \
-                    not ((((self.sm.frame - self.last_blinker_frame) * DT_CTRL) < 1.0) and (not CS.vEgo < 50 * CV.KPH_TO_MS))
+                    not ((((self.sm.frame - self.last_blinker_frame) * DT_CTRL) < 5.0) and CS.vEgo < 50 * CV.KPH_TO_MS)
     CC.longActive = CC.enabled and not any(e.overrideLongitudinal for e in self.sm['onroadEvents']) and self.CP.openpilotLongitudinalControl
 
     if CS.leftBlinker or CS.rightBlinker:
