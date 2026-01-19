@@ -63,6 +63,7 @@ class Controls:
     self.alka_enabled = bool(self.CP.alternativeExperience & ALTERNATIVE_EXPERIENCE.ALKA)
     self.alka_active = False
     self.last_blinker_frame = 0
+    self.last_brake_frame = 0
 
   def update(self):
     self.sm.update(15)
@@ -108,12 +109,14 @@ class Controls:
       gear_ok = CS.gearShifter not in (car.CarState.GearShifter.park, car.CarState.GearShifter.neutral, car.CarState.GearShifter.reverse)
       self.alka_active = lkas_on and gear_ok and calibrated and not CS.seatbeltUnlatched and not CS.doorOpen
     CC.latActive = (self.sm['selfdriveState'].active or self.alka_active) and not CS.steerFaultTemporary and not CS.steerFaultPermanent and \
-                   (not standstill or self.CP.steerAtStandstill) and CS.vEgo > 5 * CV.KPH_TO_MS and not CS.brakePressed and \
-                    not ((((self.sm.frame - self.last_blinker_frame) * DT_CTRL) < 5.0) and CS.vEgo < 50 * CV.KPH_TO_MS)
+                   (not standstill or self.CP.steerAtStandstill) and CS.vEgo > 3 * CV.KPH_TO_MS and not (((self.sm.frame - self.last_brake_frame) * DT_CTRL ) < 3.0) and \
+                    not ((((self.sm.frame - self.last_blinker_frame) * DT_CTRL) < 3.0) and CS.vEgo < 50 * CV.KPH_TO_MS)
     CC.longActive = CC.enabled and not any(e.overrideLongitudinal for e in self.sm['onroadEvents']) and self.CP.openpilotLongitudinalControl
 
     if CS.leftBlinker or CS.rightBlinker:
       self.last_blinker_frame = self.sm.frame
+    if CC.latActive and CS.brakePressed:
+      self.last_brake_frame = self.sm.frame
 
     actuators = CC.actuators
     actuators.longControlState = self.LoC.long_control_state
