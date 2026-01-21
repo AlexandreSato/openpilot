@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# mount NVMe for realdata
+sudo /data/openpilot/mount_nvme.sh
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 source "$DIR/launch_env.sh"
