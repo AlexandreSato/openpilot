@@ -140,7 +140,10 @@ class AugmentedRoadView(CameraView):
     border_color = BORDER_COLORS.get(ui_state.status, BORDER_COLORS[UIStatus.DISENGAGED])
     # dp - ALKA: use ALKA border color when active and disengaged
     if ui_state.dp_alka_active and ui_state.status == UIStatus.DISENGAGED:
-      border_color = BORDER_COLORS[UIStatus.ALKA]
+      if ui_state.sato_alka_paused:
+        border_color = BORDER_COLORS[UIStatus.DISENGAGED]
+      else:
+        border_color = BORDER_COLORS[UIStatus.ALKA]
 
     if ui_state.sato_autohold:
       border_color = BORDER_COLORS[UIStatus.AUTOHOLD]

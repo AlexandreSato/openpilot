@@ -175,6 +175,7 @@ class UIState:
     self.dp_ui_display_mode_cruise_available = False
     self.dp_ui_display_mode_cruise_enabled = False
     self.sato_autohold = False
+    self.sato_alka_paused = False
 
   def _update_status(self) -> None:
     if self.started and self.sm.updated["selfdriveState"]:
@@ -209,6 +210,9 @@ class UIState:
       self.dp_ui_display_mode_cruise_available = self.sm["carState"].cruiseState.available
       self.dp_ui_display_mode_cruise_enabled = self.sm["carState"].cruiseState.enabled
       self.sato_autohold = self.sm["carState"].brakeholdGovernor
+      if self.sm.updated["carControl"] and self.sm["carState"].vEgo > 0.1:
+        self.sato_alka_paused = not self.sm["carControl"].latActive and self.dp_alka_active
+
 
   def update_params(self) -> None:
     # For slower operations
