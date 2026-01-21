@@ -117,7 +117,7 @@ class Controls:
 
     if CS.leftBlinker or CS.rightBlinker:
       self.last_blinker_frame = self.sm.frame
-    if CC.latActive and CS.brakePressed:
+    if self.alka_active and CS.brakePressed:
       self.last_brake_frame = self.sm.frame
 
     actuators = CC.actuators
