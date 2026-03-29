@@ -6,11 +6,6 @@
 #include "cereal/gen/cpp/log.capnp.h"
 
 inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
-    // AleSato's Debug Buttons
-    {"AleSato_DebugButton1", {PERSISTENT, BOOL, "0"}},
-    {"AleSato_DebugButton2", {PERSISTENT, BOOL, "0"}},
-    // End AleSato's Debug Buttons
-
     {"AccessToken", {CLEAR_ON_MANAGER_START | DONT_LOG, STRING}},
     {"AdbEnabled", {PERSISTENT, BOOL}},
     {"AlwaysOnDM", {PERSISTENT, BOOL}},

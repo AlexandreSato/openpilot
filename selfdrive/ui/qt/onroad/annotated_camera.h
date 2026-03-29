@@ -8,23 +8,6 @@
 #include "selfdrive/ui/qt/onroad/model.h"
 #include "selfdrive/ui/qt/widgets/cameraview.h"
 
-// AleSato DebugButton
-class ButtonsWindow : public QWidget {
-  Q_OBJECT
-
-  public:
-    ButtonsWindow(QWidget* parent = 0);
-
-  private:
-    QPushButton *debug1Button;
-    QPushButton *debug2Button;
-    const QStringList debugButtonColors = {"#37b868", "#fcff4b", "#24a8bc", "#173349", "#c92231"};
-
-  public slots:
-    void updateState(const UIState &s);
-};
-// End AleSato
-
 class AnnotatedCameraWidget : public CameraWidget {
   Q_OBJECT
 
@@ -42,9 +25,6 @@ private:
 
   int skip_frame_count = 0;
   bool wide_cam_requested = false;
-
-  // AleSato stuff
-  ButtonsWindow *buttons;
 
 protected:
   void paintGL() override;

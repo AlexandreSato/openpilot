@@ -69,8 +69,8 @@ void DeveloperPanel::updateToggles(bool _offroad) {
     cereal::CarParams::Reader CP = cmsg.getRoot<cereal::CarParams>();
 
     if (!CP.getAlphaLongitudinalAvailable() || is_release) {
-      // params.remove("AlphaLongitudinalEnabled");
-      // experimentalLongitudinalToggle->setEnabled(false);
+      params.remove("AlphaLongitudinalEnabled");
+      experimentalLongitudinalToggle->setEnabled(false);
     }
 
     /*
@@ -78,14 +78,12 @@ void DeveloperPanel::updateToggles(bool _offroad) {
      * - is not a release branch, and
      * - the car supports experimental longitudinal control (alpha)
      */
-    // experimentalLongitudinalToggle->setVisible(CP.getAlphaLongitudinalAvailable() && !is_release);
-    experimentalLongitudinalToggle->setVisible(true);
+    experimentalLongitudinalToggle->setVisible(CP.getAlphaLongitudinalAvailable() && !is_release);
 
-    // longManeuverToggle->setEnabled(hasLongitudinalControl(CP) && _offroad);
-    longManeuverToggle->setEnabled(true);
+    longManeuverToggle->setEnabled(hasLongitudinalControl(CP) && _offroad);
   } else {
-    // longManeuverToggle->setEnabled(false);
-    // experimentalLongitudinalToggle->setVisible(false);
+    longManeuverToggle->setEnabled(false);
+    experimentalLongitudinalToggle->setVisible(false);
   }
   experimentalLongitudinalToggle->refresh();
 

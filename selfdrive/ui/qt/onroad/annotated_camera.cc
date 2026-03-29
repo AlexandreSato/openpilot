@@ -8,73 +8,6 @@
 #include "common/swaglog.h"
 #include "selfdrive/ui/qt/util.h"
 
-// AleSato's DebugButton
-ButtonsWindow::ButtonsWindow(QWidget *parent) : QWidget(parent) {
-  QVBoxLayout *main_layout  = new QVBoxLayout(this);
-  QWidget *btns_wrapper = new QWidget;
-  QHBoxLayout *btns_layout  = new QHBoxLayout(btns_wrapper);
-  btns_layout->setSpacing(0);
-  btns_layout->setContentsMargins(200, 0, 0, 0);
-  main_layout->addWidget(btns_wrapper, 0, Qt::AlignBottom);
-  QString initDebugButton = "";
-
-  debug2Button = new QPushButton(initDebugButton);
-  debug2Button->setFixedWidth(250);
-  debug2Button->setFixedHeight(200);
-  btns_layout->addWidget(debug2Button, 0, Qt::AlignLeft);
-  btns_layout->addSpacing(45);
-  QObject::connect(debug2Button, &QPushButton::clicked, [=]() {
-    bool debug2_button_state = Params().getBool("AleSato_DebugButton2");
-    Params().putBool("AleSato_DebugButton2", !debug2_button_state);
-  });
-
-  debug1Button = new QPushButton(initDebugButton);
-  QObject::connect(debug1Button, &QPushButton::clicked, [=]() {
-    bool debug1_button_state = Params().getBool("AleSato_DebugButton1");
-    Params().putBool("AleSato_DebugButton1", !debug1_button_state);
-  });
-  debug1Button->setFixedWidth(200);
-  debug1Button->setFixedHeight(200);
-  btns_layout->addWidget(debug1Button, 0, Qt::AlignLeft);
-  btns_layout->addSpacing(45);
-
-  btns_layout->addStretch();
-  setStyleSheet(R"(
-    QPushButton {
-      color: white;
-      text-align: center;
-      padding: 0px;
-      border-width: 12px;
-      border-style: solid;
-      background-color: rgba(75, 75, 75, 0.3);
-    }
-  )");
-
-  debug1Button->setStyleSheet(QString("font-size: 45px; border-radius: 32px; border-color: %1").arg(debugButtonColors.at(1)));
-  debug2Button->setStyleSheet(QString("font-size: 45px; border-radius: 32px; border-color: %1").arg(debugButtonColors.at(3)));
-}
-
-// We need this function when button need's update from CarState for example
-void ButtonsWindow::updateState(const UIState &s) {
-  const auto debug1ButtonState = Params().getBool("AleSato_DebugButton1");
-  if(debug1ButtonState) {
-    debug1Button->setStyleSheet(QString("font-size: 45px; border-radius: 100px; border-color: %1").arg(debugButtonColors.at(0)));
-    debug1Button->setText("Debug1\nON");
-  } else {
-    debug1Button->setStyleSheet(QString("font-size: 45px; border-radius: 100px; border-color: %1").arg(debugButtonColors.at(3)));
-    debug1Button->setText("Debug1\noff");
-  }
-  const auto debug2ButtonState = Params().getBool("AleSato_DebugButton2");
-  if(debug2ButtonState) {
-    debug2Button->setStyleSheet(QString("font-size: 60px; border-radius: 30px; border-color: %1").arg(debugButtonColors.at(4)));
-    debug2Button->setText("Debug2\nON");
-  } else {
-    debug2Button->setStyleSheet(QString("font-size: 60px; border-radius: 30px; border-color: %1").arg(debugButtonColors.at(3)));
-    debug2Button->setText("Debug2\noff");
-  }
-}
-// End AleSato's DebugButton
-
 // Window that shows camera view and variety of info drawn on top
 AnnotatedCameraWidget::AnnotatedCameraWidget(VisionStreamType type, QWidget *parent)
     : fps_filter(UI_FREQ, 3, 1. / UI_FREQ), CameraWidget("camerad", type, parent) {
@@ -86,18 +19,9 @@ AnnotatedCameraWidget::AnnotatedCameraWidget(VisionStreamType type, QWidget *par
 
   experimental_btn = new ExperimentalButton(this);
   main_layout->addWidget(experimental_btn, 0, Qt::AlignTop | Qt::AlignRight);
-
-  // AleSato's HelloButton
-  main_layout->addStretch();
-  buttons = new ButtonsWindow(this);
-  main_layout->addWidget(buttons);
 }
 
 void AnnotatedCameraWidget::updateState(const UIState &s) {
-  // Begin AleSato stuff
-  buttons->updateState(s);
-  // End AleSato stuff
-
   // update engageability/experimental mode button
   experimental_btn->updateState(s);
   dmon.updateState(s);
