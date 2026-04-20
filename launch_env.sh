@@ -19,4 +19,6 @@ if [ -z "$AGNOS_VERSION" ]; then
   export AGNOS_VERSION="17.2"
 fi
 
+export SKIP_FW_QUERY=1
+export FINGERPRINT=GWM_HAVAL_H6
 export STAGING_ROOT="/data/safe_staging"
