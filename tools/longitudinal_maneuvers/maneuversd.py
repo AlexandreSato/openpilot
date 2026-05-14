@@ -87,52 +87,52 @@ class Maneuver:
 
 
 MANEUVERS = [
-  Maneuver(
-    "come to stop",
-    [Action([-0.5], [12])],
-    repeat=2,
-    initial_speed=5.,
-  ),
+  # Maneuver(
+  #   "come to stop",
+  #   [Action([-0.5], [12])],
+  #   repeat=2,
+  #   initial_speed=5.,
+  # ),
   Maneuver(
     "start from stop",
     [Action([1.5], [6])],
     repeat=2,
     initial_speed=0.,
   ),
-  Maneuver(
-    "creep: alternate between +1m/s^2 and -1m/s^2",
-    [
-      Action([1], [3]), Action([-1], [3]),
-      Action([1], [3]), Action([-1], [3]),
-      Action([1], [3]), Action([-1], [3]),
-    ],
-    repeat=2,
-    initial_speed=0.,
-  ),
-  Maneuver(
-    "brake step response: -1m/s^2 from 20mph",
-    [Action([-1], [3])],
-    repeat=2,
-    initial_speed=20. * CV.MPH_TO_MS,
-  ),
-  Maneuver(
-    "brake step response: -4m/s^2 from 20mph",
-    [Action([-4], [3])],
-    repeat=2,
-    initial_speed=20. * CV.MPH_TO_MS,
-  ),
-  Maneuver(
-    "gas step response: +1m/s^2 from 20mph",
-    [Action([1], [3])],
-    repeat=2,
-    initial_speed=20. * CV.MPH_TO_MS,
-  ),
-  Maneuver(
-    "gas step response: +4m/s^2 from 20mph",
-    [Action([4], [3])],
-    repeat=2,
-    initial_speed=20. * CV.MPH_TO_MS,
-  ),
+  # Maneuver(
+  #   "creep: alternate between +1m/s^2 and -1m/s^2",
+  #   [
+  #     Action([1], [3]), Action([-1], [3]),
+  #     Action([1], [3]), Action([-1], [3]),
+  #     Action([1], [3]), Action([-1], [3]),
+  #   ],
+  #   repeat=2,
+  #   initial_speed=0.,
+  # ),
+  # Maneuver(
+  #   "brake step response: -1m/s^2 from 20mph",
+  #   [Action([-1], [3])],
+  #   repeat=2,
+  #   initial_speed=20. * CV.MPH_TO_MS,
+  # ),
+  # Maneuver(
+  #   "brake step response: -4m/s^2 from 20mph",
+  #   [Action([-4], [3])],
+  #   repeat=2,
+  #   initial_speed=20. * CV.MPH_TO_MS,
+  # ),
+  # Maneuver(
+  #   "gas step response: +1m/s^2 from 20mph",
+  #   [Action([1], [3])],
+  #   repeat=2,
+  #   initial_speed=20. * CV.MPH_TO_MS,
+  # ),
+  # Maneuver(
+  #   "gas step response: +4m/s^2 from 20mph",
+  #   [Action([4], [3])],
+  #   repeat=2,
+  #   initial_speed=20. * CV.MPH_TO_MS,
+  # ),
 ]
 
 
