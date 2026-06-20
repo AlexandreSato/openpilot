@@ -58,15 +58,15 @@ class CarState(CarStateBase):
     self.my_lkas_button = False
     self.prev_my_lkas_button = False
     # AleSato's automatic brakehold
-    self.time_to_brakehold = 50 * 1   # 0.5 seconds stopped to activate
+    self.brake_pedal_threshold = 20
     self.GearShifter = structs.CarState.GearShifter # avoid Rear and Park gears
     self.stock_aeb = {}
     self.brakehold_condition_satisfied = False
-    self.brakehold_condition_counter = 0
     self.reset_brakehold = False
     self.prev_brakePressed = True
     self.slope_angle = 0.0
     self.retain_brakehold = False
+    self.prev_brakehold_governor = False
 
     # radar filter (mainly for CHR/Camry)
     # the idea is to place a Panda in between Radar and camera/body (engine room) to block 0x343 (longitudinal)
@@ -227,28 +227,28 @@ class CarState(CarStateBase):
       self.prev_my_lkas_button = self.my_lkas_button
 
     # Automatic BrakeHold
-    if (self.CP.carFingerprint == CAR.TOYOTA_COROLLA_TSS2):
+    if (self.CP.carFingerprint == CAR.TOYOTA_COROLLA_TSS2 and self.CP.flags & ToyotaFlags.HYBRID.value):
       self.stock_aeb = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
       self.brakehold_condition_satisfied = (ret.standstill and ret.cruiseState.available and not ret.gasPressed and
                                             not ret.cruiseState.enabled and (ret.gearShifter not in (self.GearShifter.reverse,
                                             self.GearShifter.park)))
       if self.brakehold_condition_satisfied:
         self.slope_angle = cp.vl["VSC1S07"]["ASLP"] # filtered pitch estimate from the car, negative is a downward slope
+        self.brakepedal = cp.vl["BRAKE_MODULE"]["BRAKE_PRESSURE"] # brake pedal position
         if self.slope_angle > -3 or self.retain_brakehold:
           self.retain_brakehold = True
-          if self.brakehold_condition_counter > self.time_to_brakehold and not self.reset_brakehold:
+          if not self.reset_brakehold and ((self.brakepedal > self.brake_pedal_threshold) or self.prev_brakehold_governor):
             ret.brakeholdGovernor = True
           else:
             ret.brakeholdGovernor = False
           if not self.prev_brakePressed and ret.brakePressed: # disable automatic brakehold in second brakePress
             self.reset_brakehold = True
-          self.brakehold_condition_counter += 1
       else:
         ret.brakeholdGovernor = False
         self.reset_brakehold = False
-        self.brakehold_condition_counter = 0
         self.retain_brakehold = False
       self.prev_brakePressed = ret.brakePressed
+      self.prev_brakehold_governor = ret.brakeholdGovernor
 
     if self.CP.carFingerprint not in UNSUPPORTED_DSU_CAR:
       self.pcm_follow_distance = cp.vl["PCM_CRUISE_2"]["PCM_FOLLOW_DISTANCE"]
