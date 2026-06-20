@@ -1,3 +1,4 @@
+from openpilot.common.params import Params
 import copy
 
 from opendbc.can import CANDefine, CANParser
@@ -51,6 +52,11 @@ class CarState(CarStateBase):
     self.lkas_hud = {}
     self.gvc = 0.0
     self.secoc_synchronization = None
+
+    # AleSato's change experimental mode
+    self.params = Params()
+    self.my_lkas_button = False
+    self.prev_my_lkas_button = False
 
     # radar filter (mainly for CHR/Camry)
     # the idea is to place a Panda in between Radar and camera/body (engine room) to block 0x343 (longitudinal)
@@ -203,6 +209,12 @@ class CarState(CarStateBase):
 
     if self.CP.carFingerprint != CAR.TOYOTA_PRIUS_V:
       self.lkas_hud = copy.copy(cp_cam.vl["LKAS_HUD"])
+
+      # Change Experimental Mode using LKAS button
+      self.my_lkas_button = cp_cam.vl["LKAS_HUD"]["LKAS_STATUS"] != 0
+      if self.prev_my_lkas_button != self.my_lkas_button:
+        self.params.put_bool("ExperimentalMode", not self.params.get_bool("ExperimentalMode"), block=False)
+      self.prev_my_lkas_button = self.my_lkas_button
 
     if self.CP.carFingerprint not in UNSUPPORTED_DSU_CAR:
       self.pcm_follow_distance = cp.vl["PCM_CRUISE_2"]["PCM_FOLLOW_DISTANCE"]
