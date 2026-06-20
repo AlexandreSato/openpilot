@@ -1,3 +1,4 @@
+v0.11.1
 ![](dragonpilot/selfdrive/assets/dragonpilot.png)
 
 [Read this in English](README_EN.md)
