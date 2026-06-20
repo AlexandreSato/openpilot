@@ -179,6 +179,16 @@ class CarController(CarControllerBase):
         self.secoc_lta_message_counter += 1
         can_sends.append(lta_steer_2)
 
+
+    # AleSato's Automatic Brake Hold
+    if self.frame % 2 == 0:
+      if (self.CP.carFingerprint == CAR.TOYOTA_COROLLA_TSS2):
+        if CS.out.brakeholdGovernor:
+          can_sends.append(toyotacan.create_brakehold_command(self.packer, {}, True if self.frame % 730 < 727 else False))
+        else:
+          can_sends.append(toyotacan.create_brakehold_command(self.packer, CS.stock_aeb, False))
+
+
     # handle UI messages
     fcw_alert = hud_control.visualAlert == VisualAlert.fcw
     steer_alert = hud_control.visualAlert in (VisualAlert.steerRequired, VisualAlert.ldw)

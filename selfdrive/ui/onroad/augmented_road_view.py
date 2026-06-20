@@ -24,6 +24,7 @@ BORDER_COLORS = {
   UIStatus.OVERRIDE: rl.Color(0x89, 0x92, 0x8D, 0xFF),  # Gray for override state
   UIStatus.ENGAGED: rl.Color(0x16, 0x7F, 0x40, 0xFF),  # Green for engaged state
   UIStatus.ALKA: rl.Color(0x22, 0xa0, 0xdc, 0xf1),  # Blue for ALKA state
+  UIStatus.AUTOHOLD: rl.Color(0xff, 0x00, 0x00, 0xf1),  # Red for autohold state
 }
 
 WIDE_CAM_MAX_SPEED = 10.0  # m/s (22 mph)
@@ -130,6 +131,10 @@ class AugmentedRoadView(CameraView):
     # dp - ALKA: use ALKA border color when active and disengaged
     if ui_state.dp_alka_active and ui_state.status == UIStatus.DISENGAGED:
       border_color = BORDER_COLORS[UIStatus.ALKA]
+
+    if ui_state.sato_autohold:
+      border_color = BORDER_COLORS[UIStatus.AUTOHOLD]
+
     border_rect = rl.Rectangle(rect.x + UI_BORDER_SIZE, rect.y + UI_BORDER_SIZE,
                                rect.width - 2 * UI_BORDER_SIZE, rect.height - 2 * UI_BORDER_SIZE)
     rl.draw_rectangle_rounded_lines_ex(border_rect, border_roundness, 10, UI_BORDER_SIZE, border_color)
