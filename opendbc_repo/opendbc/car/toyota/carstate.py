@@ -229,9 +229,8 @@ class CarState(CarStateBase):
     # Automatic BrakeHold
     if (self.CP.carFingerprint == CAR.TOYOTA_COROLLA_TSS2 and self.CP.flags & ToyotaFlags.HYBRID.value):
       self.stock_aeb = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
-      self.brakehold_condition_satisfied = (ret.standstill and ret.cruiseState.available and not ret.gasPressed and
-                                            not ret.cruiseState.enabled and (ret.gearShifter not in (self.GearShifter.reverse,
-                                            self.GearShifter.park)))
+      self.brakehold_condition_satisfied = (ret.standstill and not ret.gasPressed and not ret.cruiseState.enabled and
+                                           (ret.gearShifter not in (self.GearShifter.reverse, self.GearShifter.park)))
       if self.brakehold_condition_satisfied:
         self.slope_angle = cp.vl["VSC1S07"]["ASLP"] # filtered pitch estimate from the car, negative is a downward slope
         self.brakepedal = cp.vl["BRAKE_MODULE"]["BRAKE_PRESSURE"] # brake pedal position
