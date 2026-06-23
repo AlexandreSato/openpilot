@@ -73,7 +73,7 @@ class HudRenderer(Widget):
     self._font_medium: rl.Font = gui_app.font(FontWeight.MEDIUM)
 
     self._exp_button: ExpButton = ExpButton(UI_CONFIG.button_size, UI_CONFIG.wheel_icon_size)
-    self._autohold_button: AutoHoldButton = AutoHoldButton(300, 175)
+    self._autohold_button: AutoHoldButton = AutoHoldButton(180, 175)
 
     self._torque_bar = TorqueBar(scale=4.0)
 
