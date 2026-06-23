@@ -131,6 +131,7 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"UsbGpuCompiled", {CLEAR_ON_MANAGER_START | CLEAR_ON_OFFROAD_TRANSITION, BOOL}},
     {"Version", {PERSISTENT, STRING}},
     {"as_autohold", {PERSISTENT, BOOL, "0"}},
+    {"as_shutdown_with_fog", {PERSISTENT, BOOL, "0"}},
     {"dp_dev_last_log", {CLEAR_ON_ONROAD_TRANSITION, STRING}},
     {"dp_dev_reset_conf", {CLEAR_ON_MANAGER_START, BOOL, "0"}},
     {"dp_dev_go_off_road", {CLEAR_ON_MANAGER_START, BOOL, "0"}},
