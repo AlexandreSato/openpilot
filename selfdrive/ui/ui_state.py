@@ -121,6 +121,10 @@ class UIState:
     # dp
     self.dp_dev_disable_connect = self.params.get_bool("dp_dev_disable_connect")
 
+    # as Alexandre Sato
+    self.generic_toggle: bool = False
+    self.as_shutdown_with_fog = self.params.get_bool("as_shutdown_with_fog")
+
 
   def add_offroad_transition_callback(self, callback: Callable[[], None]):
     self._offroad_transition_callbacks.append(callback)
@@ -198,6 +202,7 @@ class UIState:
     self.dp_ui_display_mode = int(self.params.get("dp_ui_display_mode") or 0)
     self.dp_ui_display_mode_cruise_available = False
     self.dp_ui_display_mode_cruise_enabled = False
+    self.as_shutdown_with_fog = self.params.get_bool("as_shutdown_with_fog")
     self.sato_autohold = False
 
   def _update_status(self) -> None:
@@ -233,6 +238,7 @@ class UIState:
       self.dp_ui_display_mode_cruise_available = self.sm["carState"].cruiseState.available
       self.dp_ui_display_mode_cruise_enabled = self.sm["carState"].cruiseState.enabled
       self.sato_autohold = self.sm["carState"].brakeholdGovernor
+      self.generic_toggle = self.sm["carState"].genericToggle
 
   def update_params(self) -> None:
     # For slower operations
@@ -400,7 +406,8 @@ class Device:
 
     ignition = self._ignition_state_ovrride(ui_state.ignition)
 
-    self._set_awake(ignition or not interaction_timeout or PC)
+    should_shutdown = ui_state.as_shutdown_with_fog and ui_state.generic_toggle
+    self._set_awake((ignition and not should_shutdown) or not interaction_timeout or PC)
 
   def _set_awake(self, on: bool):
     if on != self._awake:
