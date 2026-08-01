@@ -64,6 +64,7 @@ class DeviceLayout(Widget):
                                         callback=self._dp_on_off_road_prompt)
 
     items = [
+      self._power_off_btn,
       self._dp_vehicle_selector_btn,
       self._dp_on_off_road_btn,
       text_item(lambda: tr("Dongle ID"), self._params.get("DongleId") or (lambda: tr("N/A"))),
@@ -76,7 +77,6 @@ class DeviceLayout(Widget):
                   self._on_review_training_guide, enabled=ui_state.is_offroad),
       button_item(lambda: tr("Regulatory"), lambda: tr("VIEW"), callback=self._on_regulatory, enabled=ui_state.is_offroad),
       button_item(lambda: tr("Change Language"), lambda: tr("CHANGE"), callback=self._show_language_dialog),
-      self._power_off_btn,
     ]
     return items
 
@@ -177,12 +177,15 @@ class DeviceLayout(Widget):
       gui_app.push_widget(alert_dialog(tr("Disengage to Reboot")))
       return
 
-    def perform_reboot(result: DialogResult):
-      if not ui_state.engaged and result == DialogResult.CONFIRM:
-        self._params.put_bool("DoReboot", True)
+    if not ui_state.engaged:
+      self._params.put_bool("DoReboot", True)
 
-    dialog = ConfirmDialog(tr("Are you sure you want to reboot?"), tr("Reboot"), callback=perform_reboot)
-    gui_app.push_widget(dialog)
+    # def perform_reboot(result: DialogResult):
+    #   if not ui_state.engaged and result == DialogResult.CONFIRM:
+    #     self._params.put_bool("DoReboot", True)
+
+    # dialog = ConfirmDialog(tr("Are you sure you want to reboot?"), tr("Reboot"), callback=perform_reboot)
+    # gui_app.push_widget(dialog)
 
   def _power_off_prompt(self):
     if ui_state.engaged:
