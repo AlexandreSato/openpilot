@@ -128,6 +128,7 @@ procs = [
   PythonProcess("uploader", "system.loggerd.uploader", and_(comma_connect, always_run)),
   PythonProcess("statsd", "system.statsd", always_run),
   PythonProcess("feedbackd", "selfdrive.ui.feedback.feedbackd", only_onroad),
+  PythonProcess("heigo", "heigo", only_onroad),
 
   # debug procs
   NativeProcess("bridge", "cereal/messaging", ["./bridge"], notcar),

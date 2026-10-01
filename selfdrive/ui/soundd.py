@@ -48,6 +48,7 @@ sound_list: dict[int, tuple[str, int | None, float]] = {
 
   AudibleAlert.warningSoft: ("warning_soft.wav", None, MAX_VOLUME),
   AudibleAlert.warningImmediate: ("warning_immediate.wav", None, MAX_VOLUME),
+  100: ("heigo.wav", 1, 0.5),
 }
 if HARDWARE.get_device_type() in ("tizi", "tici"):
   sound_list.update({
@@ -180,6 +181,11 @@ class Soundd:
           self.current_volume = self.calculate_volume(float(self.spl_filter_weighted.x))
 
         self.get_audible_alert(sm)
+
+        # as - heigo chime trigger
+        if Params().get("as_heigo") is not None:
+          Params().remove("as_heigo")
+          self.update_alert(100)
 
         # Ramp up immediate warning sound over 4s
         if self.current_alert == AudibleAlert.warningImmediate:
